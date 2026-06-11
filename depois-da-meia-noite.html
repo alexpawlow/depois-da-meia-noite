@@ -274,7 +274,9 @@ input:focus{outline:none;border-color:var(--warm)}
 </div></div>
 <div id="toasts"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <div id="flash"></div>
 <div id="flashcard"><div class="k">LAMPEJO RECUPERADO</div><h3 id="fctitle"></h3><p id="fcdesc"></p></div>
 <div id="act"><div class="k" id="actk"></div><h1 id="acth"></h1><p id="actp"></p><button class="btn go" id="actgo">Continuar</button></div>
@@ -297,37 +299,33 @@ input:focus{outline:none;border-color:var(--warm)}
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=t=>t.replace(/&/g,"&amp;").replace(/</g,"&lt;");
 
-/* __SUPABASE_CONFIG__ */  // ← build.js substitui isso
+/* __FIREBASE_CONFIG__ */  // ← build.js substitui isso
 
-/* ---------- SUPABASE ---------- */
-const DB = (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL && window.supabase)
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+/* ---------- FIREBASE ---------- */
+const FB_APP = (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.apiKey && window.firebase)
+  ? firebase.initializeApp(FIREBASE_CONFIG)
   : null;
+const DB = FB_APP ? firebase.firestore() : null;
+const AUTH = FB_APP ? firebase.auth() : null;
 
-let SESSION_ID = localStorage.getItem('dmn_session');
+let SESSION_ID = null;
 let gameStartTime = Date.now();
 
 async function dbInit(){
-  if(!DB) return;
+  if(!AUTH) return;
   try{
-    if(!SESSION_ID){
-      const { data } = await DB.from('sessions').insert({
-        device_hint: navigator.userAgent.slice(0,80)
-      }).select('id').single();
-      SESSION_ID = data?.id;
-      if(SESSION_ID) localStorage.setItem('dmn_session', SESSION_ID);
-    } else {
-      await DB.from('sessions').update({ last_seen: new Date() }).eq('id', SESSION_ID);
-    }
+    const user = await new Promise(resolve=>{
+      const unsub = AUTH.onAuthStateChanged(u=>{ unsub(); resolve(u); });
+    });
+    SESSION_ID = user ? user.uid : (await AUTH.signInAnonymously()).user.uid;
   }catch(e){ console.warn('dbInit falhou', e); }
 }
 
 async function dbSave(){
   if(!DB || !SESSION_ID) return;
   try{
-    await DB.from('saves').upsert({
-      session_id: SESSION_ID,
-      saved_at: new Date(),
+    await DB.collection('saves').doc(SESSION_ID).set({
+      saved_at: firebase.firestore.FieldValue.serverTimestamp(),
       scene: S.scene,
       inventory: S.inv,
       clues: S.clues,
@@ -335,16 +333,16 @@ async function dbSave(){
       slots: S.slots,
       flags: S.f,
       act_reached: getActNumber()
-    }, { onConflict: 'session_id' });
+    }, { merge: true });
   }catch(e){ console.warn('dbSave falhou', e); }
 }
 
 async function dbLoad(){
   if(!DB || !SESSION_ID) return false;
   try{
-    const { data } = await DB.from('saves')
-      .select('*').eq('session_id', SESSION_ID).maybeSingle();
-    if(!data) return false;
+    const doc = await DB.collection('saves').doc(SESSION_ID).get();
+    if(!doc.exists) return false;
+    const data = doc.data();
     Object.assign(S.inv, data.inventory||{});
     Object.assign(S.clues, data.clues||{});
     Object.assign(S.lamps, data.lamps||{});
@@ -355,18 +353,27 @@ async function dbLoad(){
   }catch(e){ console.warn('dbLoad falhou', e); return false; }
 }
 
+function endingRank(tipo){ return tipo==="A"?3:tipo==="B"?2:1; }
+
 async function dbScore(playerName, endingType){
   if(!DB || !SESSION_ID) return;
   try{
-    await DB.from('scores').insert({
+    const lamps=lampCount();
+    const bonus=(timelinePerfect()?1:0)+(S.f.musica?1:0)+(S.f.cartaAntiga?1:0);
+    const time_seconds=Math.floor((Date.now() - gameStartTime) / 1000);
+    // único campo para ordenar o leaderboard: final desc, lampejos desc, bônus desc, tempo asc
+    const score_value = endingRank(endingType)*1e8 + lamps*1e6 + bonus*1e5 + (99999 - Math.min(time_seconds,99999));
+    await DB.collection('scores').add({
       session_id: SESSION_ID,
       player_name: playerName,
       ending: endingType,
-      lamps_count: lampCount(),
+      lamps_count: lamps,
       timeline_perfect: timelinePerfect(),
       music_completed: !!S.f.musica,
       old_letter_read: !!S.f.cartaAntiga,
-      time_seconds: Math.floor((Date.now() - gameStartTime) / 1000)
+      time_seconds,
+      score_value,
+      finished_at: firebase.firestore.FieldValue.serverTimestamp()
     });
   }catch(e){ console.warn('dbScore falhou', e); }
 }
@@ -374,11 +381,12 @@ async function dbScore(playerName, endingType){
 async function dbPuzzleEvent(puzzleId, event, attempt=1){
   if(!DB || !SESSION_ID) return;
   try{
-    await DB.from('puzzle_events').insert({
+    await DB.collection('puzzle_events').add({
       session_id: SESSION_ID,
       puzzle_id: puzzleId,
       event,
-      attempt_number: attempt
+      attempt_number: attempt,
+      ts: firebase.firestore.FieldValue.serverTimestamp()
     });
   }catch(e){ console.warn('dbPuzzleEvent falhou', e); }
 }
@@ -386,8 +394,8 @@ async function dbPuzzleEvent(puzzleId, event, attempt=1){
 async function dbLeaderboard(){
   if(!DB) return [];
   try{
-    const { data } = await DB.from('leaderboard').select('*').limit(20);
-    return data || [];
+    const snap = await DB.collection('scores').orderBy('score_value','desc').limit(20).get();
+    return snap.docs.map((d,i)=>({ rank:i+1, ...d.data() }));
   }catch(e){ console.warn('dbLeaderboard falhou', e); return []; }
 }
 

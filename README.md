@@ -5,7 +5,7 @@ Jogo de aventura narrativa / escape room em primeira pessoa, inspirado em *The W
 ## Stack
 
 - **Hosting:** Vercel (build estático)
-- **Backend/DB:** Supabase (saves, placar, analytics)
+- **Backend/DB:** Firebase (Auth anônimo + Firestore — saves, placar, analytics)
 - **Engine:** Three.js r128 via CDN, zero dependências locais
 
 ## Desenvolvimento local
@@ -15,26 +15,38 @@ npm install
 npm run dev
 ```
 
-Abre o jogo sem persistência (sem `SUPABASE_URL`/`SUPABASE_ANON_KEY` o jogo roda normalmente, apenas sem save na nuvem).
+Abre o jogo sem persistência (sem as variáveis `VITE_FIREBASE_*` o jogo roda normalmente, apenas sem save na nuvem).
 
 ## Build de produção
 
 ```bash
-cp .env.example .env   # preencha com suas credenciais Supabase
+cp .env.example .env   # preencha com a config do seu projeto Firebase
 npm install
-npm run build           # gera dist/index.html com as credenciais injetadas
+npm run build           # gera dist/index.html com a config injetada
 ```
 
 ## Deploy
 
 O projeto está configurado para deploy automático no Vercel (`vercel.json`). Configure as variáveis de ambiente no painel do Vercel:
 
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
 
-## Banco de dados (Supabase)
+## Banco de dados (Firebase)
 
-O schema (tabelas `sessions`, `saves`, `scores`, `puzzle_events`, view `leaderboard` e políticas RLS) está documentado em `BRIEFING.md`.
+Projeto: **depois-da-meia-noite**. Habilite no console do Firebase:
+
+1. **Authentication → Sign-in method → Anônimo** (identifica sessões sem login)
+2. **Firestore Database** (modo produção), com as collections:
+   - `saves/{sessionId}` — um documento por sessão (uid do auth anônimo), upsert a cada progresso
+   - `scores` — um documento por finalização (Final A ou B), com `score_value` para ordenar o leaderboard
+   - `puzzle_events` — analytics opcional de tentativas/dicas por puzzle
+
+As regras de segurança estão em `firestore.rules` (publique com `firebase deploy --only firestore:rules` ou cole no console em Firestore → Regras).
 
 ## Estrutura
 

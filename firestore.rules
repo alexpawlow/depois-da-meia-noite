@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Save de progresso — um doc por sessão (uid do auth anônimo), só o dono lê/escreve
+    match /saves/{sessionId} {
+      allow read, write: if request.auth != null && request.auth.uid == sessionId;
+    }
+
+    // Placar / Hall da Fama — leitura pública, escrita só do próprio dono, sem editar/apagar
+    match /scores/{scoreId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.session_id == request.auth.uid
+        && request.resource.data.player_name is string
+        && request.resource.data.player_name.size() > 0
+        && request.resource.data.player_name.size() <= 32
+        && request.resource.data.ending in ['A', 'B'];
+      allow update, delete: if false;
+    }
+
+    // Analytics de puzzles — só escrita do próprio dono, sem leitura pública
+    match /puzzle_events/{eventId} {
+      allow read: if false;
+      allow create: if request.auth != null && request.resource.data.session_id == request.auth.uid;
+      allow update, delete: if false;
+    }
+  }
+}
