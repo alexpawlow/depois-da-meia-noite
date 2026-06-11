@@ -1,0 +1,12 @@
+{
+  "name": "depois-da-meia-noite",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "npx serve . -p 3000"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.0"
+  }
+}

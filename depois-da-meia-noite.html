@@ -1,0 +1,2940 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Depois da Meia-Noite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Karla:wght@300;400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0f16; --panel:#151a25; --panel2:#1c2333; --line:#2b3348;
+  --ink:#dee4f0; --dim:#8a93a8; --faint:#5b647a;
+  --neon:#ff4d7d; --neon-dim:#a33352;
+  --warm:#ffb454; --warm2:#ff8a3d; --gold:#e8a34b;
+  --teal:#5ad0c5; --ok:#7ddb8a; --bad:#ff7070;
+  --serif:"Fraunces",Georgia,serif; --sans:"Karla",system-ui,sans-serif; --mono:"IBM Plex Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#06080d;color:var(--ink);font-family:var(--sans);overflow:hidden}
+#game{position:fixed;inset:0;display:flex;flex-direction:column}
+/* ---------- HUD ---------- */
+#hud{height:54px;flex:0 0 54px;display:flex;align-items:center;gap:14px;padding:0 18px;
+  background:linear-gradient(180deg,#10141f,#0c0f16);border-bottom:1px solid var(--line);z-index:40}
+#hud .logo{font-family:var(--serif);font-style:italic;font-weight:600;font-size:19px;letter-spacing:.4px;color:var(--ink)}
+#hud .logo b{color:var(--neon);font-weight:700}
+#clock{font-family:var(--mono);font-size:13px;color:var(--warm);background:#0a0d14;border:1px solid var(--line);
+  border-radius:6px;padding:5px 12px;letter-spacing:1px}
+#hud .spacer{flex:1}
+.hbtn{background:var(--panel2);border:1px solid var(--line);color:var(--ink);font-family:var(--sans);font-weight:600;
+  font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer;transition:.18s;display:flex;align-items:center;gap:7px}
+.hbtn:hover{border-color:var(--neon);color:#fff;transform:translateY(-1px)}
+.hbtn .badge{background:var(--neon);color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;font-family:var(--mono)}
+.hbtn.pulse{animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,125,.45)}50%{box-shadow:0 0 0 7px rgba(255,77,125,0)}}
+/* ---------- STAGE ---------- */
+#stagewrap{flex:1;position:relative;display:flex;align-items:center;justify-content:center;background:#06080d;overflow:hidden}
+#stage{position:relative;aspect-ratio:16/9;width:100%;max-width:calc((100vh - 150px)*16/9);max-height:calc(100vh - 150px);
+  background:#000;border-radius:4px;box-shadow:0 0 80px rgba(0,0,0,.8)}
+#scene{position:absolute;inset:0}
+#scene svg{width:100%;height:100%;display:block}
+#hotspots{position:absolute;inset:0}
+.hot{position:absolute;border-radius:10px;cursor:pointer;transition:.15s;border:1.5px dashed transparent}
+.hot:hover{border-color:rgba(255,180,84,.85);background:rgba(255,180,84,.07);box-shadow:0 0 22px rgba(255,180,84,.12) inset}
+.hot .tag{position:absolute;left:50%;top:-26px;transform:translateX(-50%) translateY(4px);white-space:nowrap;
+  background:#0b0e15ee;border:1px solid var(--gold);color:var(--warm);font-size:12px;font-weight:700;letter-spacing:.4px;
+  padding:3px 10px;border-radius:6px;opacity:0;pointer-events:none;transition:.15s;font-family:var(--sans)}
+.hot:hover .tag{opacity:1;transform:translateX(-50%) translateY(0)}
+.hot.done:hover{border-color:rgba(120,130,150,.5)}
+.hot.done .tag{border-color:var(--faint);color:var(--dim)}
+/* ---------- CAPTION ---------- */
+#caption{height:96px;flex:0 0 96px;background:linear-gradient(180deg,#0c0f16,#090b11);border-top:1px solid var(--line);
+  display:flex;align-items:center;gap:16px;padding:0 26px;z-index:40}
+#caption .face{width:62px;height:62px;border-radius:50%;flex:0 0 62px;overflow:hidden;border:2px solid var(--line);background:#10141f}
+#caption .face svg{width:100%;height:100%}
+#caption .txt{font-size:15.5px;line-height:1.5;color:var(--ink);font-family:var(--sans)}
+#caption .txt em{color:var(--warm);font-style:normal;font-weight:700}
+#caption .who{font-family:var(--serif);font-style:italic;color:var(--neon);font-size:13px;display:block;margin-bottom:2px}
+/* ---------- DIALOG OVERLAY ---------- */
+#dlg{position:absolute;inset:0;z-index:60;display:none;background:linear-gradient(180deg,transparent 30%,rgba(4,6,10,.92) 78%)}
+#dlg.on{display:block}
+#dlgbox{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);width:min(860px,92%);
+  background:#0e121cf2;border:1px solid var(--line);border-radius:14px;padding:18px 22px 16px;display:flex;gap:18px;
+  box-shadow:0 18px 60px rgba(0,0,0,.65);cursor:pointer}
+#dlgbox .face{width:84px;height:84px;border-radius:14px;flex:0 0 84px;overflow:hidden;border:2px solid var(--line);background:#141927}
+#dlgbox .face svg{width:100%;height:100%}
+#dlgbox .body{flex:1}
+#dlgbox .who{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--neon);margin-bottom:5px}
+#dlgbox .text{font-size:16px;line-height:1.55;color:var(--ink)}
+#dlgbox .text em{color:var(--warm);font-style:normal;font-weight:700}
+#dlgbox .next{position:absolute;right:16px;bottom:10px;color:var(--dim);font-size:11px;letter-spacing:1px;animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+#dlgchoices{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.choice{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 14px;color:var(--ink);
+  font-size:14.5px;cursor:pointer;text-align:left;transition:.15s;font-family:var(--sans);font-weight:600}
+.choice:hover{border-color:var(--warm);color:#fff;padding-left:18px}
+.choice.muted{opacity:.45;pointer-events:none}
+/* ---------- MODAL ---------- */
+#modalveil{position:fixed;inset:0;background:rgba(3,5,9,.78);backdrop-filter:blur(3px);z-index:80;display:none;
+  align-items:center;justify-content:center;padding:24px}
+#modalveil.on{display:flex}
+#modal{background:linear-gradient(180deg,#141927,#0f131e);border:1px solid var(--line);border-radius:16px;
+  width:min(880px,96vw);max-height:92vh;display:flex;flex-direction:column;box-shadow:0 30px 90px rgba(0,0,0,.7);overflow:hidden}
+#modal header{display:flex;align-items:center;gap:12px;padding:16px 22px;border-bottom:1px solid var(--line)}
+#modal header h2{font-family:var(--serif);font-style:italic;font-weight:600;font-size:21px;color:var(--ink);flex:1}
+#modal header .sub{font-size:12px;color:var(--dim);font-family:var(--mono)}
+#mclose{background:none;border:1px solid var(--line);color:var(--dim);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:15px}
+#mclose:hover{color:#fff;border-color:var(--neon)}
+#mbody{padding:20px 24px;overflow-y:auto;font-size:15px;line-height:1.6}
+#mbody::-webkit-scrollbar{width:8px}#mbody::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+.btn{background:var(--neon);border:none;color:#fff;font-weight:700;font-family:var(--sans);font-size:14px;
+  padding:10px 20px;border-radius:9px;cursor:pointer;transition:.15s}
+.btn:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.btn.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--ink)}
+.btn.ghost:hover{border-color:var(--warm)}
+.btn.warm{background:var(--warm2);color:#1a0e02}
+.btn:disabled{opacity:.4;pointer-events:none}
+.hintline{margin-top:14px;padding:10px 14px;border-left:3px solid var(--warm);background:rgba(255,180,84,.06);
+  color:var(--warm);font-size:13.5px;border-radius:0 8px 8px 0;display:none}
+.hintline.on{display:block}
+/* ---------- TOAST ---------- */
+#toasts{position:fixed;top:64px;right:18px;z-index:120;display:flex;flex-direction:column;gap:8px}
+.toast{background:#10141fee;border:1px solid var(--gold);border-radius:10px;padding:10px 16px;font-size:13.5px;
+  color:var(--warm);box-shadow:0 8px 30px rgba(0,0,0,.5);animation:tin .3s ease;display:flex;gap:9px;align-items:center;max-width:340px}
+.toast.clue{border-color:var(--teal);color:var(--teal)}
+.toast.item{border-color:var(--ok);color:var(--ok)}
+@keyframes tin{from{transform:translateX(30px);opacity:0}}
+/* ---------- LAMPEJO FLASH ---------- */
+#flash{position:fixed;inset:0;z-index:150;pointer-events:none;opacity:0;
+  background:radial-gradient(circle at 50% 45%,rgba(255,200,120,.95),rgba(255,120,60,.7) 45%,rgba(20,8,2,.96) 100%)}
+#flash.go{animation:flashgo 2.6s ease forwards;pointer-events:all}
+@keyframes flashgo{0%{opacity:0}12%{opacity:1}70%{opacity:1}100%{opacity:0}}
+#flashcard{position:fixed;left:50%;top:44%;transform:translate(-50%,-50%);z-index:151;text-align:center;opacity:0;pointer-events:none;width:min(560px,90vw)}
+#flashcard.go{animation:cardgo 2.6s ease forwards}
+@keyframes cardgo{0%{opacity:0;transform:translate(-50%,-44%) scale(.92)}18%{opacity:1;transform:translate(-50%,-50%) scale(1)}75%{opacity:1}100%{opacity:0}}
+#flashcard .k{font-family:var(--mono);font-size:12px;letter-spacing:4px;color:#4a2408;font-weight:700}
+#flashcard h3{font-family:var(--serif);font-style:italic;font-size:34px;color:#2b1404;margin:6px 0}
+#flashcard p{color:#53290c;font-size:15px;line-height:1.5}
+/* ---------- MEMORY BOARD ---------- */
+.ruler{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--dim);padding:0 4px;margin-bottom:6px}
+#slots{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:8px}
+.slot{height:92px;border:1.5px dashed var(--line);border-radius:10px;background:rgba(255,255,255,.018);position:relative;
+  cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center}
+.slot:hover{border-color:var(--warm)}
+.slot .idx{position:absolute;top:4px;left:7px;font-family:var(--mono);font-size:10px;color:var(--faint)}
+.slot.linkL:before,.slot.linkR:after{content:"";position:absolute;top:50%;width:12px;height:3px;background:var(--warm);box-shadow:0 0 8px var(--warm)}
+.slot.linkL:before{left:-12px}.slot.linkR:after{right:-12px}
+.mcard{width:100%;height:100%;border-radius:9px;padding:8px 9px;cursor:pointer;position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#3a2410,#241406);border:1px solid #6b4218;transition:.15s;text-align:left}
+.mcard h4{font-family:var(--serif);font-style:italic;font-size:12.5px;color:#ffd9a0;line-height:1.25}
+.mcard .t{font-family:var(--mono);font-size:10px;color:var(--warm);margin-top:4px;display:none}
+.mcard.ok{border-color:var(--warm);box-shadow:0 0 14px rgba(255,180,84,.35)}
+.mcard.ok .t{display:block}
+.mcard.sel{outline:2px solid var(--teal);transform:scale(1.04)}
+.mcard.opt:after{content:"✦";position:absolute;right:6px;top:4px;color:var(--teal);font-size:10px}
+#tray{display:flex;gap:10px;flex-wrap:wrap;min-height:100px;border-top:1px solid var(--line);padding-top:12px}
+#tray .mcard{width:128px;height:88px;flex:0 0 auto}
+#tray .empty{color:var(--faint);font-size:13px;font-style:italic;align-self:center}
+/* ---------- INVENTORY / CADERNO ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px}
+.itm{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;cursor:pointer;transition:.15s;position:relative}
+.itm:hover{border-color:var(--warm);transform:translateY(-2px)}
+.itm.sel{outline:2px solid var(--teal)}
+.itm .ic{height:54px;display:flex;align-items:center;justify-content:center;font-size:34px}
+.itm .ic svg{height:50px;width:auto}
+.itm .nm{font-size:12px;font-weight:700;margin-top:6px;color:var(--ink);line-height:1.25}
+.cluerow{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-bottom:1px solid #1d2536;cursor:pointer;border-radius:8px;transition:.12s}
+.cluerow:hover{background:rgba(90,208,197,.05)}
+.cluerow.sel{background:rgba(90,208,197,.12);outline:1px solid var(--teal)}
+.cluerow .dot{color:var(--teal);font-size:15px;margin-top:1px}
+.cluerow b{display:block;font-size:13.5px;color:var(--ink)}
+.cluerow span{font-size:12.5px;color:var(--dim);line-height:1.4}
+/* ---------- DOCS / PAPER ---------- */
+.paper{background:#efe7d2;color:#33291a;border-radius:6px;padding:22px 26px;font-family:var(--serif);
+  box-shadow:0 8px 30px rgba(0,0,0,.5), inset 0 0 60px rgba(120,90,40,.12);line-height:1.7;font-size:16px;position:relative}
+.paper.note{font-family:var(--mono);font-size:18px;letter-spacing:1px;text-align:center;background:#e9dfc6;transform:rotate(-.7deg)}
+.paper .sig{text-align:right;font-style:italic;margin-top:14px}
+.ticket{background:#f3efe2;color:#2b2417;font-family:var(--mono);font-size:13px;border-radius:4px;padding:14px 18px;
+  box-shadow:0 6px 24px rgba(0,0,0,.5);line-height:1.7}
+.ticket .hr{border-top:1.5px dashed #998c6a;margin:6px 0}
+/* ---------- ENDINGS / ACT CARDS ---------- */
+#act{position:fixed;inset:0;z-index:200;background:#05070c;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:30px}
+#act.on{display:flex;animation:fadein .8s ease}
+@keyframes fadein{from{opacity:0}}
+#act .k{font-family:var(--mono);letter-spacing:6px;color:var(--neon);font-size:13px}
+#act h1{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(30px,5vw,52px);margin:14px 0 10px;color:var(--ink)}
+#act p{color:var(--dim);font-size:16px;max-width:560px;line-height:1.6}
+#act .go{margin-top:30px}
+/* ---------- TITLE ---------- */
+#title{position:fixed;inset:0;z-index:300;background:#05070c;display:flex;align-items:center;justify-content:center}
+#title .inner{text-align:center;max-width:720px;padding:24px;position:relative;z-index:2}
+#title .eyebrow{font-family:var(--mono);letter-spacing:7px;color:var(--teal);font-size:12px}
+#title h1{font-family:var(--serif);font-style:italic;font-weight:700;font-size:clamp(42px,8vw,86px);line-height:1.02;margin:18px 0;
+  color:#ffe9f0;text-shadow:0 0 28px rgba(255,77,125,.55),0 0 80px rgba(255,77,125,.3)}
+#title h1 span{color:var(--neon)}
+#title p{color:var(--dim);font-size:16px;line-height:1.7;margin-bottom:30px}
+#titlebg{position:absolute;inset:0;z-index:1;opacity:.5}
+#titlebg svg{width:100%;height:100%}
+.kbd{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:22px}
+
+/* ---------- 3D ---------- */
+#scene canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#tip3d{position:absolute;z-index:32;pointer-events:none;background:#0b0e15ee;border:1px solid var(--gold);
+  color:var(--warm);font-size:12.5px;font-weight:700;letter-spacing:.3px;padding:4px 12px;border-radius:7px;
+  transform:translate(-50%,-135%);opacity:0;transition:opacity .12s;white-space:nowrap;font-family:var(--sans)}
+#tip3d.on{opacity:1}
+#tip3d.done{border-color:var(--faint);color:var(--dim)}
+/* pattern puzzle */
+#patgrid{touch-action:none}
+.patnode{fill:#222b3e;stroke:#3a465f;stroke-width:2;cursor:pointer}
+.patnode.smudge1{fill:#4a3a22;stroke:#8a6a32}
+.patnode.smudge2{fill:#3a3022;stroke:#6a5430}
+.patnode.smudge3{fill:#2e2a20;stroke:#544a32}
+.patnode.lit{fill:var(--warm);stroke:#fff}
+/* jukebox */
+.song{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+  padding:9px 13px;cursor:pointer;transition:.13s;font-size:14px;font-weight:600}
+.song:hover{border-color:var(--neon);color:#fff}
+.song.played{opacity:.38;pointer-events:none}
+.song .n{font-family:var(--mono);color:var(--neon);font-size:12px}
+/* generic option row */
+.opt{display:block;width:100%;text-align:left;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+  border-radius:9px;padding:10px 14px;margin-bottom:8px;cursor:pointer;font-size:14px;font-family:var(--sans)}
+.opt:hover{border-color:var(--warm)}
+.opt.good{border-color:var(--ok);color:var(--ok)}
+.opt.badx{border-color:var(--bad);color:var(--bad)}
+.opt.checked{border-color:var(--teal);background:rgba(90,208,197,.08)}
+input[type=text],input[type=number]{background:#0a0d14;border:1px solid var(--line);color:var(--ink);font-family:var(--mono);
+  font-size:16px;padding:9px 13px;border-radius:8px;width:160px;text-align:center;letter-spacing:2px}
+input:focus{outline:none;border-color:var(--warm)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.mt{margin-top:14px}.mb{margin-bottom:14px}
+.dimtxt{color:var(--dim);font-size:13px}
+.notenote{font-family:var(--mono);font-size:12px;color:var(--teal)}
+/* cupom tiles */
+#cupgrid{display:grid;grid-template-columns:1fr;gap:6px;max-width:480px;margin:0 auto}
+.cup{background:#f3efe2;color:#2b2417;font-family:var(--mono);font-size:12.5px;padding:9px 13px;cursor:pointer;
+  border-left:4px solid #c9bb96;box-shadow:0 3px 10px rgba(0,0,0,.35);transition:.13s;position:relative}
+.cup:nth-child(odd){transform:rotate(.4deg)}.cup:nth-child(even){transform:rotate(-.4deg)}
+.cup.sel{outline:2.5px solid var(--teal);z-index:2}
+.cup.lock{border-left-color:var(--ok)}
+/* fragment list */
+.frag{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:center}
+.frag .fx{flex:1;font-size:13.5px}
+.frag .bgs{display:block;font-family:var(--mono);font-size:11px;color:var(--teal);margin-top:3px}
+.frag button{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:6px;width:28px;height:26px;cursor:pointer}
+.frag button:hover{border-color:var(--warm)}
+/* dials */
+.dial{display:flex;flex-direction:column;align-items:center;gap:6px}
+.dial .val{font-family:var(--mono);font-size:34px;color:var(--warm);background:#0a0d14;border:1px solid var(--line);
+  border-radius:10px;width:96px;text-align:center;padding:8px 0}
+.dial label{font-size:12px;color:var(--dim);letter-spacing:1px}
+.dial .ctr{display:flex;gap:8px}
+/* melody */
+.notebtn{width:56px;height:84px;border-radius:9px;border:1px solid var(--line);background:linear-gradient(180deg,#202840,#161c2c);
+  color:var(--ink);font-family:var(--mono);font-size:13px;cursor:pointer;transition:.1s;display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-end;padding:8px}
+.notebtn:hover{border-color:var(--warm);transform:translateY(-3px)}
+.notebtn.hit{background:var(--warm);color:#221102;border-color:#fff}
+.seqview{font-family:var(--mono);font-size:15px;letter-spacing:2px;color:var(--warm);min-height:24px}
+@media (max-width:760px){#slots{grid-template-columns:repeat(4,1fr)}.ruler{display:none}}
+</style>
+</head>
+<body>
+<div id="game">
+  <header id="hud">
+    <span class="logo">depois da <b>meia-noite</b></span>
+    <span id="clock">SÁB · 09H47</span>
+    <span class="spacer"></span>
+    <button class="hbtn" id="bInv">🎒 Inventário <span class="badge" id="nInv">0</span></button>
+    <button class="hbtn" id="bCad">📓 Caderno <span class="badge" id="nCad">0</span></button>
+    <button class="hbtn" id="bMem">🕛 Memórias <span class="badge" id="nMem">0/12</span></button>
+    <button class="hbtn" id="bScore">🏆 Hall da Fama</button>
+    <button class="hbtn" id="bMap" style="display:none">🗺️ Sair / Ir para…</button>
+  </header>
+  <div id="stagewrap">
+    <div id="stage">
+      <div id="scene"></div>
+      <div id="hotspots"></div>
+      <div id="dlg"><div id="dlgbox">
+        <div class="face" id="dlgface"></div>
+        <div class="body"><div class="who" id="dlgwho"></div><div class="text" id="dlgtext"></div><div id="dlgchoices"></div></div>
+        <div class="next">CLIQUE ▸</div>
+      </div></div>
+    </div>
+  </div>
+  <footer id="caption">
+    <div class="face" id="capface"></div>
+    <div class="txt" id="captxt"><span class="who">Narrador</span>Um sábado que começa com mais perguntas do que café.</div>
+  </footer>
+</div>
+<div id="modalveil"><div id="modal">
+  <header><h2 id="mtitle"></h2><span class="sub" id="msub"></span><button id="mclose">✕</button></header>
+  <div id="mbody"></div>
+</div></div>
+<div id="toasts"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<div id="flash"></div>
+<div id="flashcard"><div class="k">LAMPEJO RECUPERADO</div><h3 id="fctitle"></h3><p id="fcdesc"></p></div>
+<div id="act"><div class="k" id="actk"></div><h1 id="acth"></h1><p id="actp"></p><button class="btn go" id="actgo">Continuar</button></div>
+<div id="title">
+  <div id="titlebg"></div>
+  <div class="inner">
+    <div class="eyebrow">UMA AVENTURA DE MISTÉRIO</div>
+    <h1>depois da<br><span>meia-noite</span></h1>
+    <p>Gabriel Loreto acordou às 9h47 de um sábado com um corte na sobrancelha, um bilhete que não escreveu
+    e dez horas faltando na memória. Reconstrua a noite. Antes do ônibus das sete.</p>
+    <button class="btn" id="startBtn" style="font-size:16px;padding:14px 34px">▸ Acordar</button>
+    <div class="kbd">aponte · clique · examine a fundo · desconfie de tudo</div>
+  </div>
+</div>
+<script>
+"use strict";
+/* ============================================================
+   DEPOIS DA MEIA-NOITE — jogo completo em um arquivo
+   ============================================================ */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=t=>t.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+
+/* __SUPABASE_CONFIG__ */  // ← build.js substitui isso
+
+/* ---------- SUPABASE ---------- */
+const DB = (typeof SUPABASE_URL !== 'undefined' && SUPABASE_URL && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+let SESSION_ID = localStorage.getItem('dmn_session');
+let gameStartTime = Date.now();
+
+async function dbInit(){
+  if(!DB) return;
+  try{
+    if(!SESSION_ID){
+      const { data } = await DB.from('sessions').insert({
+        device_hint: navigator.userAgent.slice(0,80)
+      }).select('id').single();
+      SESSION_ID = data?.id;
+      if(SESSION_ID) localStorage.setItem('dmn_session', SESSION_ID);
+    } else {
+      await DB.from('sessions').update({ last_seen: new Date() }).eq('id', SESSION_ID);
+    }
+  }catch(e){ console.warn('dbInit falhou', e); }
+}
+
+async function dbSave(){
+  if(!DB || !SESSION_ID) return;
+  try{
+    await DB.from('saves').upsert({
+      session_id: SESSION_ID,
+      saved_at: new Date(),
+      scene: S.scene,
+      inventory: S.inv,
+      clues: S.clues,
+      lamps: S.lamps,
+      slots: S.slots,
+      flags: S.f,
+      act_reached: getActNumber()
+    }, { onConflict: 'session_id' });
+  }catch(e){ console.warn('dbSave falhou', e); }
+}
+
+async function dbLoad(){
+  if(!DB || !SESSION_ID) return false;
+  try{
+    const { data } = await DB.from('saves')
+      .select('*').eq('session_id', SESSION_ID).maybeSingle();
+    if(!data) return false;
+    Object.assign(S.inv, data.inventory||{});
+    Object.assign(S.clues, data.clues||{});
+    Object.assign(S.lamps, data.lamps||{});
+    if(data.slots) S.slots = data.slots;
+    Object.assign(S.f, data.flags||{});
+    S.scene = data.scene;
+    return data.scene;
+  }catch(e){ console.warn('dbLoad falhou', e); return false; }
+}
+
+async function dbScore(playerName, endingType){
+  if(!DB || !SESSION_ID) return;
+  try{
+    await DB.from('scores').insert({
+      session_id: SESSION_ID,
+      player_name: playerName,
+      ending: endingType,
+      lamps_count: lampCount(),
+      timeline_perfect: timelinePerfect(),
+      music_completed: !!S.f.musica,
+      old_letter_read: !!S.f.cartaAntiga,
+      time_seconds: Math.floor((Date.now() - gameStartTime) / 1000)
+    });
+  }catch(e){ console.warn('dbScore falhou', e); }
+}
+
+async function dbPuzzleEvent(puzzleId, event, attempt=1){
+  if(!DB || !SESSION_ID) return;
+  try{
+    await DB.from('puzzle_events').insert({
+      session_id: SESSION_ID,
+      puzzle_id: puzzleId,
+      event,
+      attempt_number: attempt
+    });
+  }catch(e){ console.warn('dbPuzzleEvent falhou', e); }
+}
+
+async function dbLeaderboard(){
+  if(!DB) return [];
+  try{
+    const { data } = await DB.from('leaderboard').select('*').limit(20);
+    return data || [];
+  }catch(e){ console.warn('dbLeaderboard falhou', e); return []; }
+}
+
+function getActNumber(){
+  if(S.f.rodoOpen) return 4;
+  if(S.f.ruaOpen) return 3;
+  if(S.f.barOpen) return 2;
+  return 1;
+}
+
+/* ---------- ESTADO ---------- */
+const S={
+  scene:null, night:false,
+  inv:{},            // itens
+  clues:{},          // pistas
+  lamps:{},          // lampejos coletados {id:true}
+  slots:Array(12).fill(null), // linha do tempo
+  f:{                // flags
+    intro:false, phoneCharged:false, phoneUnlocked:false, sawFridge:false, audioFixed:false,
+    chargerMade:false, temCabo:false, temCarregador:false, cartaAntiga:false,
+    barOpen:false, contaPaga:false, fichas:3, fichaExtra:false, setlist:false, chaveiro:false,
+    perguntou:{}, storyVisto:false, leoLigado:false, ruaOpen:false,
+    edmilson:false, pastelLamp:false, cidaPediu:false, achouProtocolo:false, farmaciaOk:false,
+    taxiOk:false, rodoOpen:false, leuPlaca:false, tentou4125:false, armario:false,
+    cartaMarina:false, radioOk:false, demoTocada:false, musica:false, aptNoite:false,
+    plataformaOpen:false, fim:null
+  }
+};
+
+/* ---------- ÁUDIO (WebAudio, síntese leve) ---------- */
+let AC=null;
+function ac(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){} } return AC; }
+function tone(f,d=0.22,type="sine",vol=0.18,when=0){
+  const a=ac(); if(!a) return;
+  const t=a.currentTime+when, o=a.createOscillator(), g=a.createGain();
+  o.type=type; o.frequency.value=f; o.connect(g); g.connect(a.destination);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  o.start(t); o.stop(t+d+0.05);
+}
+const sfx={
+  click:()=>tone(880,0.06,"triangle",0.06),
+  pick:()=>{tone(660,0.1,"triangle",0.1);tone(990,0.12,"triangle",0.08,0.07)},
+  clue:()=>{tone(523,0.12,"sine",0.1);tone(784,0.16,"sine",0.1,0.09)},
+  ok:()=>{[523,659,784,1046].forEach((f,i)=>tone(f,0.18,"triangle",0.1,i*0.09))},
+  bad:()=>{tone(220,0.25,"sawtooth",0.07);tone(196,0.3,"sawtooth",0.06,0.12)},
+  lamp:()=>{[392,523,659,784,988,1175].forEach((f,i)=>tone(f,0.5,"sine",0.09,i*0.11))},
+  conn:()=>{[659,880].forEach((f,i)=>tone(f,0.3,"sine",0.1,i*0.12))}
+};
+
+/* ---------- RETRATOS (SVG) ---------- */
+function face(id){
+  const base=(skin,hair,extra="",bg="#1a2030")=>`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="${bg}"/>
+    <circle cx="50" cy="44" r="22" fill="${skin}"/>
+    <path d="M22 100 Q50 64 78 100 Z" fill="${hair==="none"?"#2e3850":hair}" opacity="${hair==="none"?1:1}"/>
+    ${extra}</svg>`;
+  switch(id){
+    case "gabriel": return base("#caa183","#2a2a33",
+      `<path d="M30 32 Q50 16 70 32 L70 40 Q50 28 30 40 Z" fill="#2a2a33"/>
+       <circle cx="42" cy="44" r="2.6" fill="#1d1d22"/><circle cx="58" cy="44" r="2.6" fill="#1d1d22"/>
+       <rect x="35" y="33" width="11" height="4.5" rx="2" fill="#e8e2d2" transform="rotate(-8 40 35)"/>
+       <path d="M44 54 Q50 58 56 54" stroke="#7a5a40" stroke-width="2" fill="none" stroke-linecap="round"/>
+       <path d="M22 100 Q50 66 78 100 Z" fill="#39414f"/>`,"#161c2a");
+    case "marina": return base("#d9ab8b","#3a2620",
+      `<path d="M26 36 Q50 12 74 36 L76 62 Q70 50 66 40 Q50 30 34 40 Q30 52 24 62 Z" fill="#3a2620"/>
+       <circle cx="42" cy="45" r="2.6" fill="#241510"/><circle cx="58" cy="45" r="2.6" fill="#241510"/>
+       <path d="M43 55 Q50 60 57 55" stroke="#8a4a3a" stroke-width="2" fill="none" stroke-linecap="round"/>
+       <path d="M22 100 Q50 68 78 100 Z" fill="#4a6ea8"/>`,"#2a1c14");
+    case "tonho": return base("#c79a72","none",
+      `<ellipse cx="50" cy="34" rx="20" ry="10" fill="#c79a72"/>
+       <path d="M36 52 Q50 64 64 52 L64 60 Q50 70 36 60 Z" fill="#5a5a64"/>
+       <circle cx="42" cy="43" r="2.6" fill="#16161c"/><circle cx="58" cy="43" r="2.6" fill="#16161c"/>
+       <path d="M22 100 Q50 70 78 100 Z" fill="#23262e"/><rect x="34" y="84" width="32" height="16" fill="#cfc8b6"/>`,"#141821");
+    case "edmilson": return base("#a97950","#3a3a3a",
+      `<path d="M26 34 Q50 18 74 34 L78 38 L24 38 Z" fill="#b8452a"/><rect x="24" y="36" width="54" height="5" fill="#8c2f1c"/>
+       <path d="M38 52 Q50 60 62 52 L62 56 Q50 64 38 56 Z" fill="#4a4a52"/>
+       <circle cx="42" cy="44" r="2.6" fill="#1a1410"/><circle cx="58" cy="44" r="2.6" fill="#1a1410"/>
+       <path d="M22 100 Q50 70 78 100 Z" fill="#7c8894"/><rect x="30" y="86" width="40" height="14" fill="#e8e2d2"/>`,"#1c1410");
+    case "cida": return base("#e0b896","#d8d4cc",
+      `<path d="M26 38 Q50 14 74 38 L72 50 Q50 34 28 50 Z" fill="#d8d4cc"/>
+       <rect x="33" y="40" width="13" height="9" rx="3" fill="none" stroke="#caa14b" stroke-width="2"/>
+       <rect x="54" y="40" width="13" height="9" rx="3" fill="none" stroke="#caa14b" stroke-width="2"/>
+       <line x1="46" y1="44" x2="54" y2="44" stroke="#caa14b" stroke-width="2"/>
+       <path d="M44 56 Q50 60 56 56" stroke="#9a5a44" stroke-width="2" fill="none" stroke-linecap="round"/>
+       <path d="M22 100 Q50 70 78 100 Z" fill="#e7ecef"/>`,"#14201c");
+    case "nilton": return base("#8a6242","#2a2a2a",
+      `<path d="M28 34 Q50 20 72 34 L76 40 L40 40 Z" fill="#2e4866"/>
+       <circle cx="42" cy="45" r="2.6" fill="#16100a"/><circle cx="58" cy="45" r="2.6" fill="#16100a"/>
+       <path d="M43 56 Q50 59 57 56" stroke="#5a3a28" stroke-width="2" fill="none"/>
+       <path d="M22 100 Q50 70 78 100 Z" fill="#caa83a"/>`,"#181a14");
+    case "leo": return base("#b88a64","#1e1e26",
+      `<path d="M28 32 Q50 14 72 32 L72 44 Q50 30 28 44 Z" fill="#1e1e26"/>
+       <circle cx="28" cy="44" r="7" fill="#e84d3a"/><circle cx="72" cy="44" r="7" fill="#e84d3a"/>
+       <path d="M28 38 Q50 20 72 38" stroke="#e84d3a" stroke-width="4" fill="none"/>
+       <circle cx="42" cy="45" r="2.6" fill="#16100a"/><circle cx="58" cy="45" r="2.6" fill="#16100a"/>
+       <path d="M22 100 Q50 70 78 100 Z" fill="#33271e"/>`,"#171320");
+    case "narrador": return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#10141f"/>
+       <circle cx="50" cy="50" r="26" fill="none" stroke="#ff4d7d" stroke-width="2" opacity=".8"/>
+       <line x1="50" y1="50" x2="50" y2="32" stroke="#ffb454" stroke-width="2.5" stroke-linecap="round"/>
+       <line x1="50" y1="50" x2="62" y2="56" stroke="#ffb454" stroke-width="2" stroke-linecap="round"/>
+       <circle cx="50" cy="50" r="3" fill="#ffb454"/></svg>`;
+  }
+  return face("gabriel");
+}
+const NAMES={gabriel:"Gabriel",marina:"Marina",tonho:"Tonho",edmilson:"Seu Edmilson",cida:"Dona Cida",
+  nilton:"Nilton (taxista)",leo:"Léo",narrador:"Narrador"};
+
+/* ---------- CAPTION / TOAST ---------- */
+function say(text,who="gabriel"){
+  $("#capface").innerHTML=face(who);
+  $("#captxt").innerHTML=`<span class="who">${NAMES[who]}</span>${text}`;
+}
+function toast(msg,cls=""){
+  const d=document.createElement("div"); d.className="toast "+cls; d.innerHTML=msg;
+  $("#toasts").appendChild(d); setTimeout(()=>{d.style.opacity=0;d.style.transition=".5s"; setTimeout(()=>d.remove(),520)},3400);
+}
+
+/* ---------- DIÁLOGO ---------- */
+let dq=[], donDlg=null;
+function dialog(lines,onEnd){
+  dq=lines.slice(); donDlg=onEnd||null; $("#dlg").classList.add("on"); stepDlg();
+}
+function stepDlg(){
+  if(!dq.length){ $("#dlg").classList.remove("on"); const f=donDlg; donDlg=null; if(f)f(); return; }
+  const L=dq.shift();
+  if(typeof L==="function"){ $("#dlg").classList.remove("on"); L(); return; }
+  $("#dlgface").innerHTML=face(L.w||"gabriel");
+  $("#dlgwho").textContent=NAMES[L.w||"gabriel"];
+  $("#dlgtext").innerHTML=L.t;
+  const ch=$("#dlgchoices"); ch.innerHTML="";
+  if(L.choices){
+    $("#dlgbox").onclick=null; $(".next").style.display="none";
+    L.choices.forEach(c=>{
+      const b=document.createElement("button"); b.className="choice"+(c.off?" muted":""); b.innerHTML=c.t;
+      b.onclick=e=>{e.stopPropagation(); sfx.click(); $("#dlg").classList.remove("on"); dq=[]; donDlg=null; c.fn&&c.fn();};
+      ch.appendChild(b);
+    });
+  } else {
+    $(".next").style.display="block";
+    $("#dlgbox").onclick=()=>{sfx.click(); stepDlg();};
+  }
+}
+
+/* ---------- MODAL ---------- */
+let onModalClose=null;
+function modal(title,html,sub=""){
+  $("#mtitle").textContent=title; $("#msub").textContent=sub; $("#mbody").innerHTML=html;
+  $("#modalveil").classList.add("on");
+}
+function closeModal(){ $("#modalveil").classList.remove("on"); const f=onModalClose; onModalClose=null; if(f)f(); }
+$("#mclose").onclick=closeModal;
+$("#modalveil").onclick=e=>{ if(e.target.id==="modalveil") closeModal(); };
+
+/* ---------- RELÓGIO / ATO ---------- */
+function clock(t){ $("#clock").textContent=t; }
+function actCard(k,h,p,fn){
+  $("#actk").textContent=k; $("#acth").textContent=h; $("#actp").innerHTML=p;
+  $("#act").classList.add("on");
+  $("#actgo").onclick=()=>{ $("#act").classList.remove("on"); sfx.click(); fn&&fn(); };
+}
+
+/* ---------- ITENS ---------- */
+const ICON={
+  papel:`<svg viewBox="0 0 60 60"><rect x="12" y="8" width="36" height="44" rx="3" fill="#e9dfc6" transform="rotate(-6 30 30)"/><text x="30" y="30" font-size="9" text-anchor="middle" fill="#6b5a3a" font-family="monospace" transform="rotate(-6 30 30)">7-41-25</text><text x="30" y="41" font-size="8" text-anchor="middle" fill="#6b5a3a" font-family="monospace" transform="rotate(-6 30 30)">GVRC</text></svg>`,
+  cabo:`<svg viewBox="0 0 60 60"><path d="M10 44 Q30 10 50 40" stroke="#3c4660" fill="none"/><path d="M10 44 Q30 12 50 40" stroke="#4a5878" stroke-width="5" fill="none" stroke-linecap="round"/><rect x="4" y="40" width="12" height="9" rx="2" fill="#7a87a0"/><rect x="46" y="36" width="11" height="8" rx="2" fill="#7a87a0"/></svg>`,
+  carregpilha:`<svg viewBox="0 0 60 60"><rect x="10" y="14" width="40" height="32" rx="5" fill="#2c3650" stroke="#4a5878"/><rect x="16" y="20" width="12" height="20" rx="5" fill="#1a2236"/><rect x="32" y="20" width="12" height="20" rx="5" fill="#1a2236"/><rect x="24" y="48" width="12" height="6" rx="2" fill="#7a87a0"/></svg>`,
+  carregador:`<svg viewBox="0 0 60 60"><rect x="8" y="18" width="30" height="24" rx="4" fill="#2c3650" stroke="#5ad0c5"/><path d="M38 30 Q50 30 52 16" stroke="#5ad0c5" stroke-width="4" fill="none" stroke-linecap="round"/><text x="22" y="34" font-size="10" fill="#5ad0c5" text-anchor="middle">⚡</text></svg>`,
+  celular:`<svg viewBox="0 0 60 60"><rect x="17" y="6" width="26" height="48" rx="5" fill="#10141f" stroke="#4a5878"/><path d="M20 12 L40 30 M24 26 L38 14" stroke="#3a4358" stroke-width="1.4"/><circle cx="30" cy="49" r="2.4" fill="#4a5878"/></svg>`,
+  carteira:`<svg viewBox="0 0 60 60"><rect x="8" y="16" width="44" height="30" rx="5" fill="#6b4a2e"/><rect x="8" y="24" width="44" height="9" fill="#54381f"/><circle cx="46" cy="36" r="3.4" fill="#caa14b"/></svg>`,
+  chaveiro:`<svg viewBox="0 0 60 60"><circle cx="22" cy="20" r="9" fill="none" stroke="#9aa4ba" stroke-width="3.4"/><rect x="24" y="26" width="20" height="26" rx="4" fill="#ff8a3d" transform="rotate(18 34 39)"/><text x="33" y="45" font-size="15" font-weight="bold" fill="#5a2a08" text-anchor="middle" transform="rotate(18 34 39)">7</text></svg>`,
+  cupom:`<svg viewBox="0 0 60 60"><path d="M16 6 h28 v44 l-4 4 -4 -4 -4 4 -4 -4 -4 4 -4 -4 -4 4 Z" fill="#f3efe2"/><line x1="22" y1="16" x2="38" y2="16" stroke="#8a7a52"/><line x1="22" y1="24" x2="38" y2="24" stroke="#8a7a52"/><line x1="22" y1="32" x2="34" y2="32" stroke="#8a7a52"/></svg>`,
+  curativo:`<svg viewBox="0 0 60 60"><rect x="8" y="22" width="44" height="16" rx="8" fill="#e8e2d2" transform="rotate(-14 30 30)"/><rect x="24" y="24" width="12" height="12" fill="#d4c9a8" transform="rotate(-14 30 30)"/></svg>`,
+  cupomfarm:`<svg viewBox="0 0 60 60"><rect x="14" y="6" width="32" height="48" fill="#eef3ee"/><text x="30" y="18" font-size="7" text-anchor="middle" fill="#2a6a3a" font-family="monospace">FARMA24H</text><line x1="20" y1="26" x2="40" y2="26" stroke="#7a9a82"/><line x1="20" y1="33" x2="40" y2="33" stroke="#7a9a82"/><text x="30" y="47" font-size="8" text-anchor="middle" fill="#2a6a3a" font-family="monospace">02h47</text></svg>`,
+  recibo:`<svg viewBox="0 0 60 60"><rect x="14" y="10" width="32" height="40" fill="#f6ec9a" transform="rotate(8 30 30)"/><text x="30" y="26" font-size="8" text-anchor="middle" fill="#6a5a1a" font-family="monospace" transform="rotate(8 30 30)">TÁXI</text><text x="30" y="38" font-size="8" text-anchor="middle" fill="#6a5a1a" font-family="monospace" transform="rotate(8 30 30)">38,40</text></svg>`,
+  guitarra:`<svg viewBox="0 0 60 60"><path d="M40 6 l5 5 -16 16 a10 10 0 1 1 -5 -5 Z" fill="#8a4a22"/><circle cx="22" cy="40" r="11" fill="#a85e2c"/><circle cx="22" cy="40" r="4.4" fill="#33180a"/><line x1="40" y1="6" x2="45" y2="11" stroke="#caa14b" stroke-width="2"/></svg>`,
+  carta:`<svg viewBox="0 0 60 60"><rect x="8" y="16" width="44" height="30" rx="3" fill="#efe7d2"/><path d="M8 16 L30 34 L52 16" fill="none" stroke="#a8946a" stroke-width="2"/></svg>`,
+  cartaAntiga:`<svg viewBox="0 0 60 60"><rect x="8" y="16" width="44" height="30" rx="3" fill="#dcceaa"/><path d="M8 16 L30 34 L52 16" fill="none" stroke="#8a744a" stroke-width="2"/><circle cx="44" cy="40" r="6" fill="#a83a3a" opacity=".8"/></svg>`,
+  fita:`<svg viewBox="0 0 60 60"><rect x="6" y="16" width="48" height="28" rx="4" fill="#2a2a33" stroke="#5a5a6a"/><circle cx="22" cy="30" r="6" fill="#10141f" stroke="#8a93a8"/><circle cx="38" cy="30" r="6" fill="#10141f" stroke="#8a93a8"/><rect x="14" y="18" width="32" height="7" fill="#e9dfc6"/><text x="30" y="24" font-size="5" text-anchor="middle" fill="#33291a" font-family="monospace">DEMO</text></svg>`,
+  elastico:`<svg viewBox="0 0 60 60"><ellipse cx="30" cy="30" rx="18" ry="13" fill="none" stroke="#c4a050" stroke-width="4" transform="rotate(-18 30 30)"/></svg>`,
+  radio:`<svg viewBox="0 0 60 60"><rect x="6" y="18" width="48" height="30" rx="5" fill="#5a4a3a" stroke="#7a6a55"/><circle cx="20" cy="33" r="7" fill="#33291f" stroke="#9a8a70"/><rect x="32" y="26" width="18" height="8" fill="#22180f"/><rect x="32" y="38" width="18" height="5" fill="#22180f"/><line x1="44" y1="18" x2="54" y2="4" stroke="#9a8a70" stroke-width="2"/></svg>`
+};
+const ITEMS={
+  papel:{n:"Papel amassado",d:"\u201CMARINA — 7-41-25 / GVRC\u201D, numa caligrafia que não é minha.",deep:()=>deepPapel()},
+  cabo:{n:"Cabo do controle",d:"Cabo USB do controle de videogame. Comprido, fiel, subestimado."},
+  carregpilha:{n:"Carregador de pilhas",d:"Da gaveta da cozinha. Tem uma porta USB na lateral — quem diria.",deep:()=>{say("Examinando a fundo: tem uma <em>porta USB</em> de saída na lateral. Se eu tivesse um cabo…");sfx.clue();}},
+  carregador:{n:"Carregador improvisado",d:"Cabo do controle + carregador de pilhas. Engenharia de ressaca."},
+  carteira:{n:"Carteira",d:"De volta ao bolso. Sem dinheiro — mas com história."},
+  chaveiro:{n:"Chaveiro laranja nº 7",d:"Ficha plástica laranja, número 7, logotipo \u201CR. CENTRAL\u201D.",deep:()=>{say("No verso da ficha: <em>\u201CGUARDA-VOLUMES — devolver na retirada\u201D</em>. R. Central… Rodoviária?");addClue("fichagv");}},
+  curativo:{n:"Curativo reserva",d:"Estava no bolso interno da jaqueta. No verso, um número de protocolo: B-0247.",deep:()=>{say("No verso da embalagem, carimbado: <em>PROTOCOLO B-0247 — FARMA 24H</em>.");addClue("protocolo");}},
+  cupomfarm:{n:"Cupom da farmácia",d:"02h47 — antisséptico, curativo borboleta, analgésico. Pago em moedas."},
+  recibo:{n:"Recibo de táxi",d:"R$ 38,40 — 06h12. O endereço de origem está borrado.",deep:()=>{say("Bandeira 2. O valor está legível: <em>R$ 38,40</em>, às <em>06h12</em>. A origem, borrada. Mas tarifa é matemática…");addClue("recibo");}},
+  guitarra:{n:"Giannini 1978",d:"A guitarra do meu pai. Intacta. Cheirando a madeira e a noite.",deep:()=>deepGuitarra()},
+  carta:{n:"Carta de Marina",d:"\u201CSe você decifrou este bilhete, ainda dá tempo.\u201D",deep:()=>showCartaMarina(true)},
+  cartaAntiga:{n:"Carta antiga (10 anos)",d:"A carta que eu nunca respondi. O selo ainda dói.",deep:()=>showCartaAntiga(true)},
+  fita:{n:"Fita cassete — \u201CDepois da Meia-Noite\u201D",d:"Demo, nunca terminada. Vértice, dez anos atrás."},
+  elastico:{n:"Elástico de dinheiro",d:"Da gaveta da cozinha. Segura notas, prende espinafre… e talvez salve um rádio."},
+  celular:{n:"Celular (tela trincada)",d:"Trincado, mas vivo. Minha memória externa.",deep:()=>openPhone()}
+};
+function addItem(id){ if(S.inv[id])return; S.inv[id]=true; sfx.pick();
+  toast(`🎒 <b>${ITEMS[id].n}</b> adicionado ao inventário`,"item"); updateHud(); }
+function hasItem(id){ return !!S.inv[id]; }
+function removeItem(id){ delete S.inv[id]; updateHud(); }
+
+/* ---------- PISTAS ---------- */
+const CLUES={
+  barro:{n:"Barro vermelho nos sapatos",d:"Não chove perto do bar. Esse barro veio de outro lugar da cidade."},
+  fritura:{n:"Cheiro de fritura na jaqueta",d:"Óleo, massa, madrugada. Eu comi pastel em algum momento."},
+  papel:{n:"O bilhete: 7-41-25 / GVRC",d:"Caligrafia feminina, firme. Quem é Marina? O que abrem esses números?"},
+  curativo:{n:"Curativo borboleta",d:"Profissional demais para ser obra minha. Alguém cuidou de mim."},
+  chaves:{n:"Chaves por dentro da porta",d:"Alguém me ajudou a entrar… e trancou por fora? Como?"},
+  sangue:{n:"Mancha de sangue no punho",d:"Pequena, seca. Minha? De outra pessoa? Preciso saber."},
+  suporte:{n:"O suporte vazio na parede",d:"A Giannini do meu pai não está lá. Meu estômago gela."},
+  cartaAntiga:{n:"A carta nunca respondida",d:"Marina me escreveu há dez anos. Eu nunca respondi. Covarde."},
+  leo:{n:"Áudios bravos do Léo",d:"\u201CVocê vai se arrepender disso.\u201D Arrepender de quê, Léo?!"},
+  ameaca:{n:"Mensagem de número desconhecido",d:"\u201CFica longe dela.\u201D Curto. Gelado. Quem?"},
+  story4:{n:"Story do show",d:"Um vídeo de fã: \u201CCIDADE FANTASMA 🔥 a 4ª do set\u201D. Útil para reconstruir a ordem."},
+  comanda:{n:"Comanda até 01h28",d:"Nenhum pedido meu depois de 01h28. Saí do bar por volta de 01h30. Primeiro marco firme."},
+  jeans:{n:"A mulher de jaqueta jeans",d:"Tonho: \u201Cvocês pareciam se conhecer de outra vida.\u201D"},
+  bone:{n:"O homem de boné",d:"Saiu do bar logo atrás de nós. Tonho não foi com a cara dele."},
+  saiuguitarra:{n:"Saí com a guitarra",d:"Tonho confirmou: levei a Giannini a tiracolo ao sair. Então onde ela está?"},
+  fichagv:{n:"Ficha do guarda-volumes",d:"\u201CR. CENTRAL\u201D = Rodoviária Central. A ficha nº 7… e o \u201C7\u201D do bilhete."},
+  briga:{n:"A verdade da briga",d:"Eu não bati em ninguém. Protegi a Marina, levei um empurrão e beijei o meio-fio."},
+  protocolo:{n:"Protocolo B-0247",d:"Carimbado no curativo reserva. A farmácia busca cupons por protocolo."},
+  recibo:{n:"Recibo de táxi — R$ 38,40, 06h12",d:"Com a tabela de tarifas dá para calcular de onde a corrida partiu."},
+  taxi:{n:"O relato do taxista",d:"Nilton me trouxe da rodoviária, me ajudou a subir e devolveu as chaves pela fresta."},
+  gvrc:{n:"GVRC decifrado",d:"Guarda-Volumes da Rodoviária Central. Armário 7. E os números… 41-25."},
+  cabosom:{n:"O cabo da mesa de som",d:"Léo só está bravo porque sumi com o cabo. Está… na minha mochila. Ops."},
+  placa:{n:"Instruções do guarda-volumes",d:"\u201CGire à DIREITA até o 1º número. Depois à ESQUERDA até o 2º.\u201D Como um cofre."},
+  domingo:{n:"Ônibus de domingo, 7h, plataforma 12",d:"Ela remarcou. Tenho até amanhã de manhã. Um dia inteiro… que já está acabando."}
+};
+function addClue(id){ if(S.clues[id])return; S.clues[id]=true; sfx.clue();
+  toast(`🔎 Nova pista: <b>${CLUES[id].n}</b>`,"clue"); updateHud(); }
+function hasClue(id){ return !!S.clues[id]; }
+
+/* ---------- LAMPEJOS ---------- */
+const LAMPS=[
+ {id:"show",   o:0, t:"00h10",h:"O palco e o rosto",      d:"A balada final. A plateia em silêncio — e um rosto na terceira fileira que me fez errar o acorde.",opt:false},
+ {id:"balcao", o:1, t:"00h30",h:"Conversa no balcão",     d:"Dois copos, dez anos de assunto atrasado. O Tonho fingindo que não escutava.",opt:true},
+ {id:"neon",   o:2, t:"00h55",h:"Risada e neon",          d:"A rua molhada de luz cor-de-rosa. Uma risada que eu conhecia de outra década.",opt:false},
+ {id:"tiracolo",o:3,t:"01h30",h:"A guitarra a tiracolo",  d:"Saí do bar com a Giannini nas costas. Não confiei em deixá-la lá. Nisso, fui sábio.",opt:true},
+ {id:"pastel", o:4, t:"01h45",h:"Pastel na madrugada",    d:"Óleo fervendo, rádio baixinho, ela rindo de mim com a boca cheia. Queijo com azeitona.",opt:false},
+ {id:"queda",  o:5, t:"02h10",h:"A queda",                d:"Um boné. Um empurrão. O meio-fio subindo até a minha cara. A voz dela: \u201Cpara com isso!\u201D",opt:false},
+ {id:"farmacia",o:6,t:"02h47",h:"Mãos de enfermeira",     d:"\u201CDez anos e você ainda não aprendeu a cair.\u201D As mãos dela fechando o curativo.",opt:false},
+ {id:"cidade", o:7, t:"03h40",h:"A cidade deserta",       d:"Andamos por ruas que eram nossas. Falamos da banda, do pai, da música inacabada.",opt:true},
+ {id:"presente",o:8,t:"04h50",h:"O presente recusado",    d:"Tentei dar a guitarra a ela. Três vezes ela disse não. Eu, bêbado, não aceitei o não.",opt:false},
+ {id:"banco",  o:9, t:"05h50",h:"O banco da rodoviária",  d:"O anúncio da plataforma. O frio do banco de metal. O sono vencendo a despedida.",opt:false},
+ {id:"despedida",o:10,t:"06h05",h:"A despedida que dormi",d:"Ela guardou a guitarra, escreveu o bilhete, me pôs num táxi. E não me acordou. Ou não conseguiu.",opt:false},
+ {id:"taxi",   o:11,t:"06h12",h:"O táxi do amanhecer",    d:"A cidade laranja pela janela. Alguém dizendo \u201Csegura ele aí\u201D. O cheiro de pinheirinho do retrovisor.",opt:true}
+];
+const lampById=id=>LAMPS.find(l=>l.id===id);
+function lampCount(){ return Object.keys(S.lamps).length; }
+function unlockLamp(id){
+  if(S.lamps[id]) return;
+  S.lamps[id]=true; updateHud(); sfx.lamp();
+  const L=lampById(id);
+  $("#fctitle").textContent=L.h; $("#fcdesc").textContent=L.d;
+  $("#flash").classList.remove("go"); $("#flashcard").classList.remove("go");
+  void $("#flash").offsetWidth;
+  $("#flash").classList.add("go"); $("#flashcard").classList.add("go");
+  setTimeout(()=>{ $("#flash").classList.remove("go"); $("#flashcard").classList.remove("go");
+    toast(`🕛 Lampejo recuperado: <b>${L.h}</b> — posicione no Quadro de Memórias`); },2650);
+  $("#bMem").classList.add("pulse"); setTimeout(()=>$("#bMem").classList.remove("pulse"),6000);
+}
+
+/* ---------- QUADRO DE MEMÓRIAS ---------- */
+let memSel=null; // id de card selecionado na bandeja
+function timelinePerfect(){ return LAMPS.every(l=>S.slots[l.o]===l.id); }
+function openMemory(){
+  memSel=null;
+  const html=`
+  <p class="dimtxt mb">Arraste a noite de volta ao lugar: <b>clique num cartão</b>, depois <b>clique num espaço</b> da linha
+  do tempo (00h–07h). Cartões certos se acendem; três seguidos formam uma <b style="color:var(--warm)">Conexão</b>. ✦ = memória opcional.</p>
+  <div class="ruler"><span>00h</span><span>01h</span><span>02h</span><span>03h</span><span>04h</span><span>05h</span><span>06h</span><span>07h</span></div>
+  <div id="slots"></div>
+  <div class="ruler" style="margin-top:2px"><span></span></div>
+  <div id="tray"></div>
+  <div class="row mt">
+    <button class="btn ghost" id="memHint">💭 Pensar alto</button>
+    <span class="dimtxt" id="memStat"></span>
+  </div>`;
+  modal("Quadro de Memórias",html,`${lampCount()}/12 lampejos`);
+  renderMemory();
+  $("#memHint").onclick=memHint;
+}
+function renderMemory(){
+  const slots=$("#slots"); slots.innerHTML="";
+  for(let i=0;i<12;i++){
+    const sl=document.createElement("div"); sl.className="slot"; sl.dataset.i=i;
+    sl.innerHTML=`<span class="idx">${String(i+1).padStart(2,"0")}</span>`;
+    const cid=S.slots[i];
+    if(cid){
+      const L=lampById(cid);
+      const ok=L.o===i;
+      const c=document.createElement("div"); c.className="mcard"+(ok?" ok":"")+(L.opt?" opt":"");
+      c.innerHTML=`<h4>${L.h}</h4><div class="t">${L.t}</div>`;
+      c.onclick=e=>{e.stopPropagation(); S.slots[i]=null; sfx.click(); renderMemory();};
+      sl.appendChild(c);
+      if(ok && i>0 && S.slots[i-1] && lampById(S.slots[i-1]).o===i-1) sl.classList.add("linkL");
+      if(ok && i<11 && S.slots[i+1] && lampById(S.slots[i+1]).o===i+1) sl.classList.add("linkR");
+    }
+    sl.onclick=()=>{ if(memSel && !S.slots[sl.dataset.i|0]) placeCard(memSel, sl.dataset.i|0); };
+    slots.appendChild(sl);
+  }
+  const tray=$("#tray"); tray.innerHTML="";
+  const loose=LAMPS.filter(l=>S.lamps[l.id] && !S.slots.includes(l.id));
+  if(!loose.length) tray.innerHTML=`<span class="empty">${lampCount()? "Todos os lampejos recuperados estão na linha do tempo." : "Nenhum lampejo recuperado ainda. Gatilhos sensoriais — sons, cheiros, objetos — trazem a noite de volta."}</span>`;
+  loose.forEach(L=>{
+    const c=document.createElement("div"); c.className="mcard"+(memSel===L.id?" sel":"")+(L.opt?" opt":"");
+    c.innerHTML=`<h4>${L.h}</h4>`;
+    c.onclick=()=>{ memSel=(memSel===L.id?null:L.id); sfx.click(); renderMemory(); };
+    tray.appendChild(c);
+  });
+  const placed=S.slots.filter(Boolean).length, okN=S.slots.filter((cid,i)=>cid&&lampById(cid).o===i).length;
+  $("#memStat").textContent=`${placed} posicionados · ${okN} no lugar certo`;
+  if(timelinePerfect() && lampCount()===12 && !S.f._memDone){ S.f._memDone=true; sfx.ok();
+    toast("🕛 <b>A noite inteira, em ordem.</b> A linha do tempo está completa.");
+  }
+}
+function placeCard(id,i){
+  S.slots[i]=id; memSel=null;
+  const L=lampById(id);
+  if(L.o===i){
+    sfx.conn();
+    // streak de 3?
+    let streak=1,a=i-1,b=i+1;
+    while(a>=0&&S.slots[a]&&lampById(S.slots[a]).o===a){streak++;a--}
+    while(b<12&&S.slots[b]&&lampById(S.slots[b]).o===b){streak++;b++}
+    if(streak>=3) toast("✨ <b>Conexão!</b> Três memórias seguidas se ligaram.");
+  } else {
+    sfx.click();
+    const wrongTalk=[
+      "Então eu briguei <em>antes</em> de sair do bar…? Não. Não fecha.",
+      "Espera. O pastel veio <em>depois</em> da farmácia? Eu comi pastel com curativo na cara? …Não duvido, mas não.",
+      "Se foi assim, eu fui à rodoviária <em>duas vezes</em>. Nem bêbado.",
+      "Hmm. Alguma coisa nessa ordem range. Deixa eu olhar de novo."
+    ];
+    say(wrongTalk[Math.floor(Math.random()*wrongTalk.length)]);
+  }
+  renderMemory();
+}
+function memHint(){
+  const wrong=S.slots.map((cid,i)=>cid&&lampById(cid).o!==i?{cid,i}:null).filter(Boolean);
+  if(wrong.length){ const w=wrong[0], L=lampById(w.cid);
+    say(`\u201C${L.h}\u201D… não. Isso não aconteceu aí. ${L.o<w.i?"Foi <em>mais cedo</em> na noite.":"Foi <em>mais tarde</em>."}`);
+  } else if(lampCount()<12){
+    say("Faltam fragmentos. Sons, cheiros, objetos… e perguntas que eu ainda não fiz.");
+  } else {
+    say("Está tudo aqui. A noite inteira. Só falta… eu fazer alguma coisa com ela.");
+  }
+}
+
+/* ---------- INVENTÁRIO ---------- */
+let invSel=null;
+function openInv(){
+  invSel=null;
+  modal("Inventário",`<div class="grid" id="invgrid"></div>
+   <p class="dimtxt mt">Clique para <b>olhar</b>. Use <b>Examinar a fundo</b> para girar, virar e abrir.
+   Selecione dois itens com <b>Combinar</b> para testar ideias.</p>
+   <div class="row mt"><button class="btn ghost" id="combBtn">🔗 Combinar (escolha 2)</button><span class="dimtxt" id="combStat"></span></div>`,
+   Object.keys(S.inv).length+" itens");
+  renderInv();
+}
+let combining=false, combFirst=null;
+function renderInv(){
+  const g=$("#invgrid"); if(!g) return; g.innerHTML="";
+  Object.keys(S.inv).forEach(id=>{
+    const it=ITEMS[id];
+    const d=document.createElement("div"); d.className="itm"+((combFirst===id)?" sel":"");
+    d.innerHTML=`<div class="ic">${ICON[id]||"📦"}</div><div class="nm">${it.n}</div>`;
+    d.onclick=()=>{
+      if(combining){
+        if(!combFirst){combFirst=id; renderInv(); $("#combStat").textContent="Agora o segundo item…";}
+        else if(combFirst!==id){ tryCombine(combFirst,id); combining=false; combFirst=null; renderInv(); }
+        return;
+      }
+      sfx.click();
+      lookItem(id);
+    };
+    g.appendChild(d);
+  });
+  const cb=$("#combBtn"); if(cb) cb.onclick=()=>{combining=!combining; combFirst=null; renderInv();
+    $("#combStat").textContent=combining?"Escolha o primeiro item…":"";
+    cb.classList.toggle("warm",combining)};
+}
+function lookItem(id){
+  const it=ITEMS[id];
+  modal(it.n,`<div class="row" style="align-items:flex-start">
+    <div style="width:120px;flex:0 0 120px">${ICON[id]||""}</div>
+    <div style="flex:1"><p>${it.d}</p>
+      <div class="row mt">
+        ${it.deep?`<button class="btn warm" id="deepBtn">🔍 Examinar a fundo</button>`:""}
+        <button class="btn ghost" id="backInv">← Inventário</button>
+      </div></div></div>`);
+  if(it.deep) $("#deepBtn").onclick=()=>{sfx.click(); it.deep();};
+  $("#backInv").onclick=openInv;
+}
+function tryCombine(a,b){
+  const pair=[a,b].sort().join("+");
+  if(pair==="cabo+carregpilha"){
+    removeItem("cabo"); removeItem("carregpilha"); addItem("carregador");
+    S.f.chargerMade=true;
+    say("O cabo do controle encaixa na porta USB do carregador de pilhas. <em>Engenharia de ressaca: aprovada.</em>");
+    sfx.ok(); openInv(); return;
+  }
+  const jokes={
+    "celular+guitarra":"Plugar o celular na guitarra? Eu não estou nesse nível de produtor musical.",
+    "carteira+recibo":"O recibo cabe na carteira. Revolucionário. Próxima ideia.",
+    "fita+celular":"O celular olha para a fita cassete como quem olha um fóssil.",
+    "elastico+guitarra":"Tocar com elástico? A Giannini me perdoaria, mas o meu pai não.",
+    "chaveiro+papel":"A ficha 7… o \u201C7\u201D do bilhete. Não é combinação de objetos — é combinação de <em>ideias</em>. Anotado.",
+  };
+  say(jokes[pair]||"Isso… não combina. Nem com boa vontade.");
+}
+
+/* ---------- CADERNO DE HIPÓTESES ---------- */
+let cadSel=[];
+const COMBOS={
+  "cartaAntiga+papel":{r:()=>{ say("A letra… <em>é a mesma</em>. Dez anos entre uma carta e um bilhete. MARINA. E de repente eu lembro: nós dois, andando por uma cidade vazia…");
+      unlockLamp("cidade"); },done:false},
+  "fichagv+papel":{r:()=>{ say("\u201C7-41-25 / GVRC\u201D + ficha nº 7 da \u201CR. Central\u201D… <em>Guarda-Volumes da Rodoviária Central. Armário 7.</em> Os outros números devem abrir alguma coisa.");
+      addClue("gvrc"); },done:false},
+  "papel+recibo":{r:()=>say("O táxi me trouxe de algum lugar… e o bilhete aponta para a rodoviária. As duas pistas olham na mesma direção."),done:false},
+  "curativo+sangue":{r:()=>say("O curativo é profissional, o sangue é pouco e está no <em>meu</em> punho. Hipótese: limpei o meu próprio rosto. O sangue é meu."),done:false},
+  "barro+fichagv":{r:()=>say("Barro vermelho + rodoviária. Os canteiros da Rodoviária Central são famosos por sujar sapato de gente apressada."),done:false},
+  "ameaca+bone":{r:()=>say("\u201CFica longe dela\u201D + o homem de boné que saiu atrás de nós. Não gosto da soma disso."),done:false},
+  "leo+cabosom":{r:()=>say("Mistério dos áudios do Léo: resolvido. Vergonha: permanente."),done:false}
+};
+function openCaderno(){
+  cadSel=[];
+  modal("Caderno de Hipóteses",`
+   <p class="dimtxt mb">Pistas registradas automaticamente. Selecione <b>duas</b> e teste uma dedução.</p>
+   <div id="cluelist"></div>
+   <div class="row mt"><button class="btn warm" id="dedBtn">🧠 Deduzir</button><span class="dimtxt" id="dedStat"></span></div>`,
+   Object.keys(S.clues).length+" pistas");
+  renderClues();
+  $("#dedBtn").onclick=()=>{
+    if(cadSel.length!==2){$("#dedStat").textContent="Selecione exatamente duas pistas.";return;}
+    const key=cadSel.slice().sort().join("+");
+    const c=COMBOS[key];
+    closeModal();
+    if(c){ c.r(); }
+    else {
+      const meh=["Hmm. Junto, separo, e… nada. Próxima.","Essas duas não conversam. Igual eu e o Léo agora.",
+        "Se isso fizer sentido, eu como o chaveiro.","Interessante. Inútil, mas interessante."];
+      say(meh[Math.floor(Math.random()*meh.length)]);
+    }
+  };
+}
+function renderClues(){
+  const l=$("#cluelist"); if(!l)return; l.innerHTML="";
+  Object.keys(S.clues).forEach(id=>{
+    const c=CLUES[id];
+    const r=document.createElement("div"); r.className="cluerow"+(cadSel.includes(id)?" sel":"");
+    r.innerHTML=`<span class="dot">◈</span><div><b>${c.n}</b><span>${c.d}</span></div>`;
+    r.onclick=()=>{ sfx.click();
+      if(cadSel.includes(id)) cadSel=cadSel.filter(x=>x!==id);
+      else { cadSel.push(id); if(cadSel.length>2) cadSel.shift(); }
+      renderClues(); };
+    l.appendChild(r);
+  });
+  if(!Object.keys(S.clues).length) l.innerHTML=`<p class="dimtxt">Nenhuma pista ainda. Olhe. Examine a fundo. Desconfie.</p>`;
+}
+
+/* ---------- HUD ---------- */
+function updateHud(){
+  $("#nInv").textContent=Object.keys(S.inv).length;
+  $("#nCad").textContent=Object.keys(S.clues).length;
+  $("#nMem").textContent=lampCount()+"/12";
+  dbSave();
+}
+$("#bInv").onclick=()=>{sfx.click();openInv()};
+$("#bCad").onclick=()=>{sfx.click();openCaderno()};
+$("#bMem").onclick=()=>{sfx.click();openMemory()};
+$("#bMap").onclick=()=>{sfx.click();openMap()};
+$("#bScore").onclick=()=>{sfx.click();openLeaderboard()};
+
+/* ---------- PLACAR / HALL DA FAMA ---------- */
+async function openLeaderboard(){
+  if(!DB){
+    modal("🏆 Hall da Fama","<p class=\"dimtxt\">Placar online indisponível neste momento.</p>","offline");
+    return;
+  }
+  modal("🏆 Hall da Fama","<p class=\"dimtxt\">Carregando…</p>","top 20 jogadores");
+  const rows=await dbLeaderboard();
+  const html=rows.length?`
+    <table style="width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px">
+      <tr style="color:var(--dim)"><th>#</th><th>Nome</th><th>Final</th><th>Lampejos</th><th>Tempo</th></tr>
+      ${rows.map(r=>`
+        <tr style="border-top:1px solid var(--line)">
+          <td style="color:var(--neon);padding:8px 4px">${r.rank}</td>
+          <td style="padding:8px 4px">${esc(r.player_name||"")}</td>
+          <td style="padding:8px 4px;color:${r.ending==='A'?'var(--ok)':r.ending==='B'?'var(--warm)':'var(--dim)'}">${r.ending==='A'?'★ A':r.ending==='B'?'B':'C'}</td>
+          <td style="padding:8px 4px">${r.lamps_count}/12</td>
+          <td style="padding:8px 4px;color:var(--dim)">${r.time_seconds?Math.floor(r.time_seconds/60)+'m':'-'}</td>
+        </tr>`).join('')}
+    </table>` : `<p class="dimtxt">Ainda não há ninguém no placar. Seja o primeiro a chegar à Plataforma 12.</p>`;
+  modal("🏆 Hall da Fama", html, "top 20 jogadores");
+}
+
+/* ---------- NOME DO JOGADOR (placar) ---------- */
+function promptPlayerName(){
+  return new Promise(resolve=>{
+    modal("🏆 Seu nome para o Hall da Fama",`
+      <p class="dimtxt mb">Como você quer aparecer no placar público?</p>
+      <input id="playerNameInput" maxlength="32" placeholder="Seu nome" autofocus
+        style="width:100%;padding:10px;background:#10141f;border:1px solid var(--line);border-radius:8px;color:var(--ink);font-family:var(--mono);font-size:14px;margin-bottom:12px">
+      <button class="btn" id="playerNameOk" style="width:100%">Salvar no placar</button>
+    `,"placar público");
+    let done=false;
+    const finish=v=>{ if(done) return; done=true; onModalClose=null; closeModal(); resolve(v); };
+    onModalClose=()=>finish(null);
+    $("#playerNameOk").onclick=()=>{
+      const v=$("#playerNameInput").value.trim();
+      finish(v||"Anônimo");
+    };
+    $("#playerNameInput").addEventListener("keydown",e=>{
+      if(e.key==="Enter") $("#playerNameOk").click();
+    });
+  });
+}
+
+/* ---------- CONTINUAR DE ONDE PAROU ---------- */
+function showContinueModal(savedScene){
+  modal("Continuar de onde parou?",`
+    <p class="dimtxt mb">Encontramos um save automático desta sessão.</p>
+    <button class="btn opt" id="contYes" style="width:100%;margin-bottom:8px">▸ Continuar</button>
+    <button class="btn opt" id="contNo" style="width:100%">↺ Recomeçar do zero</button>
+  `,"save automático");
+  onModalClose=()=>{
+    gameStartTime=Date.now();
+    actCard("ATO 1","O Apartamento","Sábado, 9h47. Tudo neste quarto conta uma história. Inclusive o que <b>não</b> está nele.",()=>{
+      updateHud(); goScene("apt");
+    });
+  };
+  $("#contYes").onclick=()=>{
+    onModalClose=null; closeModal();
+    if(S.f.barOpen) $("#bMap").style.display="flex";
+    updateHud();
+    goScene(savedScene);
+  };
+  $("#contNo").onclick=()=>{
+    onModalClose=null; closeModal();
+    gameStartTime=Date.now();
+    actCard("ATO 1","O Apartamento","Sábado, 9h47. Tudo neste quarto conta uma história. Inclusive o que <b>não</b> está nele.",()=>{
+      updateHud(); goScene("apt");
+    });
+  };
+}
+
+/* ---------- MAPA ---------- */
+function openMap(){
+  const locs=[
+    {id:"apt",n:S.f.aptNoite?"Apartamento (noite)":"Meu apartamento",t:S.f.aptNoite?"SÁB · 23H30":"SÁB · 09H47",on:true,ic:"🏠"},
+    {id:"bar",n:"Bar Subsolo",t:"SÁB · 12H10",on:S.f.barOpen,ic:"🍺"},
+    {id:"rua",n:"O quarteirão — food truck, farmácia, táxi",t:"SÁB · 17H30",on:S.f.ruaOpen,ic:"🌆"},
+    {id:"rodo",n:"Rodoviária Central",t:"SÁB · 21H40",on:S.f.rodoOpen,ic:"🚌"},
+    {id:"plat",n:"Plataforma 12 — DOMINGO, 7h",t:"DOM · 06H52",on:S.f.plataformaOpen,ic:"🌅"}
+  ];
+  let html=`<p class="dimtxt mb">Para onde Gabriel vai agora?</p>`;
+  locs.forEach(L=>{
+    if(!L.on) return;
+    html+=`<button class="opt" data-go="${L.id}"><b>${L.ic} ${L.n}</b> <span class="dimtxt" style="float:right">${L.t}</span></button>`;
+  });
+  if(S.f.cartaMarina && !S.f.plataformaOpen){
+    html+=`<p class="dimtxt mt">O ônibus dela é <b>amanhã às 7h</b>. Quando eu estiver pronto… ou quando o tempo acabar.</p>`;
+  }
+  modal("Ir para…",html,"mapa da cidade");
+  $$("#mbody [data-go]").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.go; closeModal();
+    if(id==="plat"){ confirmPlataforma(); return; }
+    travel(id);
+  });
+}
+function travel(id){
+  if(id==="apt"){ goScene(S.f.aptNoite?"aptN":"apt"); }
+  else if(id==="bar") goScene("bar");
+  else if(id==="rua") goScene("rua");
+  else if(id==="rodo") goScene("rodo");
+}
+
+/* ============================================================
+   MOTOR DE CENAS (3D)
+   ============================================================ */
+const SCENES={};
+/* ============================================================
+   MOTOR 3D — primeira pessoa estilo escape room
+   ============================================================ */
+let R3=null, ANIM=[], INTS=[], HOTOBJS={};
+function init3D(){
+  if(R3) return;
+  const cv=document.createElement("canvas");
+  cv.style.cssText="position:absolute;inset:0;width:100%;height:100%;display:block";
+  $("#scene").appendChild(cv);
+  const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  R3={renderer,scene:null,map:{},hover:null,
+      cam:new THREE.PerspectiveCamera(58,16/9,0.05,260),
+      ray:new THREE.Raycaster(),nd:new THREE.Vector2(-2,-2),
+      px:0,py:0,base:{x:0,y:0},p0:new THREE.Vector3(),p1:new THREE.Vector3(),dolly:1};
+  R3.cam.rotation.order="YXZ";
+  const tip=document.createElement("div"); tip.id="tip3d"; $("#stage").appendChild(tip);
+  const st=$("#stage");
+  st.addEventListener("mousemove",e=>{
+    const r=st.getBoundingClientRect();
+    R3.px=e.clientX-r.left; R3.py=e.clientY-r.top;
+    R3.nd.x=(R3.px/r.width)*2-1; R3.nd.y=-((R3.py/r.height)*2-1);
+  });
+  st.addEventListener("mouseleave",()=>R3.nd.set(-2,-2));
+  st.addEventListener("click",()=>{
+    if($("#dlg").classList.contains("on")||$("#modalveil").classList.contains("on"))return;
+    if(R3.hover&&R3.map[R3.hover]){ sfx.click(); R3.map[R3.hover].fn(); }
+  });
+  onResize3D(); window.addEventListener("resize",onResize3D);
+  requestAnimationFrame(loop3D);
+}
+function onResize3D(){
+  if(!R3)return;
+  const r=$("#stage").getBoundingClientRect();
+  R3.renderer.setSize(r.width,r.height,false);
+  R3.cam.aspect=r.width/Math.max(1,r.height); R3.cam.updateProjectionMatrix();
+}
+let _t=0,_lt=0;
+function loop3D(ts){
+  requestAnimationFrame(loop3D);
+  if(!R3||!R3.scene)return;
+  const dt=Math.min((ts-_lt)/1000,0.05); _lt=ts; _t+=dt;
+  if(R3.dolly<1) R3.dolly=Math.min(1,R3.dolly+dt*0.9);
+  const e=1-Math.pow(1-R3.dolly,3);
+  R3.cam.position.lerpVectors(R3.p0,R3.p1,e);
+  R3.cam.rotation.x=R3.base.x + R3.nd.y*0.05 + Math.sin(_t*0.45)*0.004;
+  R3.cam.rotation.y=R3.base.y - R3.nd.x*0.085;
+  ANIM.forEach(f=>f(_t));
+  const blocked=$("#dlg").classList.contains("on")||$("#modalveil").classList.contains("on");
+  if(blocked||R3.nd.x<-1.5){ setHover(null); }
+  else{
+    R3.ray.setFromCamera(R3.nd,R3.cam);
+    const hits=R3.ray.intersectObjects(INTS,true);
+    setHover(hits.length?(hits[0].object.userData.hlabel||null):null);
+  }
+  R3.renderer.render(R3.scene,R3.cam);
+}
+function setHover(lab){
+  const tip=$("#tip3d"); if(!tip)return;
+  if(lab!==R3.hover){
+    if(R3.hover&&HOTOBJS[R3.hover]) hl(HOTOBJS[R3.hover],false);
+    if(lab&&HOTOBJS[lab]) hl(HOTOBJS[lab],true);
+    R3.hover=lab;
+    $("#stage").style.cursor=lab?"pointer":"default";
+  }
+  if(lab){
+    const done=R3.map[lab]&&R3.map[lab].done;
+    tip.textContent=lab; tip.className="on"+(done?" done":"");
+    tip.style.left=R3.px+"px"; tip.style.top=(R3.py-14)+"px";
+  } else tip.className="";
+}
+function hl(o,on){
+  o.traverse(c=>{
+    if(!c.isMesh||c.userData.noHL||!c.material||!c.material.emissive)return;
+    if(on){ c.material.emissive.setHex(0x8a5518); c.material.emissiveIntensity=0.55; }
+    else{ c.material.emissive.setHex(c.userData._em||0); c.material.emissiveIntensity=(c.userData._ei!==undefined?c.userData._ei:1); }
+  });
+}
+function disposeScene(){
+  if(!R3.scene)return;
+  R3.scene.traverse(o=>{
+    if(o.geometry)o.geometry.dispose();
+    if(o.material){ const ms=Array.isArray(o.material)?o.material:[o.material];
+      ms.forEach(m=>{ if(m.map)m.map.dispose(); m.dispose(); }); }
+  });
+  R3.scene=null;
+}
+function buildScene(id,keepCam){
+  init3D();
+  disposeScene(); ANIM=[]; INTS=[]; HOTOBJS={};
+  const out=BUILD3D[id]();
+  R3.scene=out.scene;
+  R3.p1.set(...out.cam);
+  const tgt=new THREE.Vector3(...out.look);
+  R3.cam.position.copy(R3.p1); R3.cam.lookAt(tgt);
+  R3.base={x:R3.cam.rotation.x,y:R3.cam.rotation.y};
+  const dir=new THREE.Vector3().subVectors(R3.p1,tgt).normalize();
+  R3.p0.copy(R3.p1).add(dir.multiplyScalar(keepCam?0:1.0));
+  R3.dolly=keepCam?1:0;
+  R3.map={};
+  (SCENES[id]&&SCENES[id].hots?SCENES[id].hots():[]).forEach(h=>R3.map[h.l]={fn:h.fn,done:!!h.done});
+}
+function goScene(id){
+  S.scene=id;
+  buildScene(id,false);
+  clock(SCENES[id].time);
+  if(SCENES[id].enter) SCENES[id].enter();
+}
+function refresh(){ if(S.scene&&BUILD3D[S.scene]) buildScene(S.scene,true); }
+function renderHotspots(){ refresh(); }
+
+/* ---------- helpers de geometria ---------- */
+function M(c,o={}){return new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:0.88,metalness:0.04},o))}
+function MB(o){return new THREE.MeshBasicMaterial(o)}
+function B(w,h,d,m,x=0,y=0,z=0,ry=0){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.rotation.y=ry;return o}
+function Cy(rt,rb,h,m,x=0,y=0,z=0,seg=20){const o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),m);o.position.set(x,y,z);return o}
+function Sp(r,m,x=0,y=0,z=0,s=16){const o=new THREE.Mesh(new THREE.SphereGeometry(r,s,Math.max(8,s-2)),m);o.position.set(x,y,z);return o}
+function Pl(w,h,m,x=0,y=0,z=0,rx=0,ry=0,rz=0){const o=new THREE.Mesh(new THREE.PlaneGeometry(w,h),m);o.position.set(x,y,z);o.rotation.set(rx,ry,rz);return o}
+function G(){return new THREE.Group()}
+function add(p,...os){os.forEach(o=>p.add(o));return p}
+function at(o,x,y,z,ry=0){o.position.set(x,y,z);o.rotation.y=ry;return o}
+function hot(o,label){
+  o.userData.hlabel=label;
+  o.traverse(c=>{ if(c.isMesh){ c.userData.hlabel=label;
+    if(c.material&&c.material.emissive){ c.userData._em=c.material.emissive.getHex(); c.userData._ei=c.material.emissiveIntensity; } } });
+  INTS.push(o); HOTOBJS[label]=o; return o;
+}
+function disc(r,x,z,op=0.32){
+  const o=new THREE.Mesh(new THREE.CircleGeometry(r,22),MB({color:0x000000,transparent:true,opacity:op}));
+  o.rotation.x=-Math.PI/2; o.position.set(x,0.012,z); return o;
+}
+function pt(color,i,d,x,y,z,decay=2){const l=new THREE.PointLight(color,i,d,decay);l.position.set(x,y,z);return l}
+function coneGlow(color,r,h,x,y,z,op=0.07){
+  const o=new THREE.Mesh(new THREE.ConeGeometry(r,h,20,1,true),
+    MB({color,transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending}));
+  o.position.set(x,y,z); return o;
+}
+
+/* ---------- texturas via canvas ---------- */
+function ctex(w,h,fn,rep){
+  const c=document.createElement("canvas"); c.width=w; c.height=h;
+  fn(c.getContext("2d"),w,h);
+  const t=new THREE.CanvasTexture(c); t.anisotropy=4;
+  if(rep){ t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(rep[0],rep[1]); }
+  return t;
+}
+function noise(g,w,h,n,a){ for(let i=0;i<n;i++){ g.fillStyle=`rgba(${Math.random()<.5?0:255},${Math.random()<.5?0:255},255,${a*Math.random()})`;
+  g.fillStyle=`rgba(0,0,0,${a*Math.random()})`; g.fillRect(Math.random()*w,Math.random()*h,2,2);} }
+function woodTex(base="#4a3826",dark="#33271a"){return ctex(256,256,(g,w,h)=>{
+  g.fillStyle=base;g.fillRect(0,0,w,h);
+  for(let y=0;y<h;y+=32){ g.fillStyle=`rgba(0,0,0,${0.08+Math.random()*0.12})`; g.fillRect(0,y,w,2);
+    g.strokeStyle="rgba(0,0,0,.12)"; for(let i=0;i<5;i++){g.beginPath();const yy=y+6+Math.random()*22;g.moveTo(0,yy);
+      g.bezierCurveTo(w*.3,yy+Math.random()*4-2,w*.6,yy+Math.random()*4-2,w,yy);g.stroke();} }
+  noise(g,w,h,900,0.05);},[2,2]);}
+function brickTex(base="#241a20",mortar="#16101a"){return ctex(256,256,(g,w,h)=>{
+  g.fillStyle=mortar;g.fillRect(0,0,w,h);
+  const bh=22,bw=58;
+  for(let r=0,y=0;y<h;y+=bh,r++){ const off=(r%2)*bw/2;
+    for(let x=-bw;x<w+bw;x+=bw){ g.fillStyle=`hsl(${340+Math.random()*20},18%,${10+Math.random()*7}%)`;
+      g.fillRect(x+off+2,y+2,bw-4,bh-4);} }
+  noise(g,w,h,1200,0.07);},[3,1.6]);}
+function plasterTex(c1="#39404f"){return ctex(128,128,(g,w,h)=>{g.fillStyle=c1;g.fillRect(0,0,w,h);noise(g,w,h,700,0.05);},[2,2]);}
+function asphaltTex(){return ctex(256,256,(g,w,h)=>{g.fillStyle="#1d1d24";g.fillRect(0,0,w,h);noise(g,w,h,2400,0.1);
+  g.strokeStyle="rgba(0,0,0,.25)";for(let i=0;i<8;i++){g.beginPath();g.moveTo(Math.random()*w,Math.random()*h);
+    g.lineTo(Math.random()*w,Math.random()*h);g.stroke();}},[5,5]);}
+function tileTex(c1="#2c2f38",c2="#23262e"){return ctex(256,256,(g,w,h)=>{
+  for(let y=0;y<4;y++)for(let x=0;x<4;x++){g.fillStyle=(x+y)%2?c1:c2;g.fillRect(x*64,y*64,64,64);}
+  g.strokeStyle="rgba(0,0,0,.4)";for(let i=0;i<=4;i++){g.strokeRect(0,i*64,256,0.5);g.strokeRect(i*64,0,0.5,256);}
+  noise(g,w,h,600,0.05);},[6,6]);}
+function neonTex(text,color,sub=""){return ctex(1024,256,(g,w,h)=>{
+  g.fillStyle="#07060a";g.fillRect(0,0,w,h);
+  g.font="italic 700 130px Georgia"; g.textAlign="center"; g.textBaseline="middle";
+  g.shadowColor=color; g.shadowBlur=46; g.strokeStyle=color; g.lineWidth=5;
+  g.strokeText(text,w/2,h/2-(sub?16:0)); g.shadowBlur=14; g.strokeText(text,w/2,h/2-(sub?16:0));
+  g.fillStyle="#fff"; g.globalAlpha=.85; g.font="italic 700 128px Georgia"; g.fillText(text,w/2,h/2-(sub?16:0)); g.globalAlpha=1;
+  if(sub){ g.shadowBlur=10; g.fillStyle=color; g.font="32px monospace"; g.fillText(sub,w/2,h-36); }});}
+function posterTex(lines,accent="#ff4d7d",bg="#15101c"){return ctex(256,384,(g,w,h)=>{
+  g.fillStyle=bg;g.fillRect(0,0,w,h); noise(g,w,h,500,0.12);
+  g.strokeStyle=accent;g.lineWidth=5;g.strokeRect(10,10,w-20,h-20);
+  g.textAlign="center";
+  lines.forEach((L,i)=>{ g.fillStyle=i===0?accent:"#d8d4cc";
+    g.font=(i===0?"italic 800 34px Georgia":"700 19px monospace");
+    g.fillText(L,w/2,70+i*46); });
+  g.fillStyle=accent; g.fillRect(30,h-60,w-60,3);});}
+function paperTex(title,lines,rot=0){return ctex(256,320,(g,w,h)=>{
+  g.fillStyle="#e9dfc6";g.fillRect(0,0,w,h); noise(g,w,h,300,0.05);
+  g.save();g.translate(w/2,0);g.rotate(rot);
+  g.fillStyle="#33291a";g.textAlign="center";g.font="700 20px monospace";
+  g.fillText(title,0,38);
+  g.font="15px monospace";
+  lines.forEach((L,i)=>g.fillText(L,0,76+i*26));
+  g.restore();});}
+function ledTex(lines){return ctex(512,256,(g,w,h)=>{
+  g.fillStyle="#05070c";g.fillRect(0,0,w,h);
+  g.font="700 26px monospace"; g.textAlign="left";
+  lines.forEach((L,i)=>{ g.fillStyle=L.c||"#7ddb8a"; g.shadowColor=g.fillStyle; g.shadowBlur=8;
+    g.fillText(L.t,24,46+i*42); });});}
+function winTex(lines,litColor="#ffd9a0"){return ctex(128,256,(g,w,h)=>{
+  g.fillStyle="#0c0f18";g.fillRect(0,0,w,h);
+  for(let y=14;y<h-10;y+=34)for(let x=10;x<w-10;x+=26){
+    g.fillStyle=Math.random()<.42?litColor:"#141a26";
+    g.globalAlpha=Math.random()<.42?(.5+Math.random()*.5):1;
+    g.fillRect(x,y,16,22); g.globalAlpha=1;}},[1,1]);}
+function grafTex(){return ctex(512,256,(g,w,h)=>{
+  g.fillStyle="rgba(0,0,0,0)";g.clearRect(0,0,w,h);
+  const cols=["#ff4d7d","#5ad0c5","#ffd34d","#b48aff"];
+  for(let i=0;i<4;i++){ g.strokeStyle=cols[i%4]; g.lineWidth=9; g.lineCap="round"; g.beginPath();
+    let x=30+i*120,y=60+Math.random()*120; g.moveTo(x,y);
+    for(let k=0;k<5;k++){x+=20+Math.random()*40;y+=Math.random()*80-40;g.lineTo(x,y);} g.stroke();}
+  g.font="italic 800 52px Georgia"; g.fillStyle="#ff4d7d"; g.globalAlpha=.85;
+  g.fillText("VÉRTICE",60,200); g.globalAlpha=1;});}
+function skyTex(stops){return ctex(16,256,(g,w,h)=>{
+  const gr=g.createLinearGradient(0,0,0,h);
+  stops.forEach(s=>gr.addColorStop(s[0],s[1]));
+  g.fillStyle=gr;g.fillRect(0,0,w,h);});}
+
+/* ---------- figuras low-poly ---------- */
+function dude(o={}){
+  const {shirt=0x556070,pants=0x2c3240,skin=0xcaa183,hair=0x26262e,cap=null,capCol=0xb8452a,
+         apron=null,longHair=false,beard=null}=o;
+  const g=G();
+  add(g, B(0.15,0.74,0.19,M(pants),-0.105,0.37,0), B(0.15,0.74,0.19,M(pants),0.105,0.37,0));
+  add(g, B(0.09,0.07,0.24,M(0x1c1c22),-0.105,0.035,0.03), B(0.09,0.07,0.24,M(0x1c1c22),0.105,0.035,0.03));
+  add(g, B(0.46,0.6,0.25,M(shirt),0,1.04,0));
+  add(g, B(0.115,0.54,0.15,M(shirt),-0.3,1.02,0), B(0.115,0.54,0.15,M(shirt),0.3,1.02,0));
+  add(g, Sp(0.06,M(skin),-0.3,0.7,0), Sp(0.06,M(skin),0.3,0.7,0));
+  const head=Sp(0.15,M(skin),0,1.51,0,18); add(g,head);
+  if(hair!==null&&!cap){ const hr=Sp(0.155,M(hair),0,1.545,-0.022,16);
+    hr.scale.set(1,0.78,1); add(g,hr);
+    if(longHair) add(g, B(0.26,0.34,0.1,M(hair),0,1.36,-0.1)); }
+  if(cap){ add(g, Cy(0.16,0.165,0.085,M(capCol),0,1.63,0), B(0.2,0.025,0.17,M(capCol),0,1.6,0.17)); }
+  if(beard) add(g, B(0.2,0.1,0.05,M(beard),0,1.42,0.12));
+  if(apron) add(g, B(0.42,0.5,0.03,M(apron),0,0.92,0.145));
+  add(g, disc(0.34,0,0.02));
+  return g;
+}
+function guitarMesh(col=0xa85e2c){
+  const g=G();
+  const b1=Cy(0.2,0.2,0.06,M(col,{roughness:0.35}),0,0.2,0); b1.rotation.x=Math.PI/2;
+  const b2=Cy(0.155,0.155,0.062,M(col,{roughness:0.35}),0,0.46,0); b2.rotation.x=Math.PI/2;
+  add(g,b1,b2, Cy(0.07,0.07,0.064,M(0x2a1408),0,0.24,0.004).rotateX(Math.PI/2));
+  add(g, B(0.055,0.62,0.035,M(0x4a2e16),0,0.82,0));
+  add(g, B(0.09,0.15,0.04,M(0x221208),0,1.19,0));
+  for(let i=0;i<3;i++) add(g, Sp(0.012,M(0xcaa14b,{metalness:.6}),-0.035+i*0.035,1.2,0.03));
+  return g;
+}
+
+/* ============================================================
+   CONSTRUTORES DE CENA 3D
+   ============================================================ */
+const BUILD3D={};
+
+/* ---------- APARTAMENTO (dia/noite) ---------- */
+function roomShell(sc,W,D,H,floorMat,wallMat,ceilMat){
+  const fl=Pl(W,D,floorMat,0,0,0,-Math.PI/2); sc.add(fl);
+  sc.add(Pl(W,H,wallMat,0,H/2,-D/2));
+  sc.add(Pl(D,H,wallMat,-W/2,H/2,0,0,Math.PI/2));
+  sc.add(Pl(D,H,wallMat,W/2,H/2,0,0,-Math.PI/2));
+  sc.add(Pl(W,H,wallMat,0,H/2,D/2,0,Math.PI));
+  sc.add(Pl(W,D,ceilMat||M(0x23283a),0,H,0,Math.PI/2));
+}
+BUILD3D.apt=()=>buildApt(false);
+BUILD3D.aptN=()=>buildApt(true);
+function buildApt(night){
+  const sc=new THREE.Scene();
+  sc.fog=new THREE.Fog(night?0x070a12:0x191e2c, 6, 18);
+  roomShell(sc,9,7.4,2.95, M(0x2c2418,{map:woodTex()}), M(0x3a4150,{map:plasterTex(night?"#262d3c":"#39404f")}), M(night?0x1c2230:0x2b3142));
+  // rodapé
+  [[0,-3.68,9,0],[0,3.68,9,Math.PI],[-4.48,0,7.4,Math.PI/2],[4.48,0,7.4,-Math.PI/2]].forEach(r=>{
+    sc.add(B(r[2],0.12,0.04,M(0x20242e),r[0],0.06,r[1],r[3]));});
+  // ----- janela (parede esquerda) -----
+  const win=G();
+  add(win, B(0.1,1.7,1.9,M(0x1d2230),0,1.7,0));
+  const view=Pl(1.7,1.5,MB({map:ctex(256,256,(g,w,h)=>{
+    if(night){ const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,"#0a0e1e");gr.addColorStop(1,"#1a2238");
+      g.fillStyle=gr;g.fillRect(0,0,w,h);
+      g.fillStyle="#e8e4d0";g.beginPath();g.arc(70,60,20,0,7);g.fill();
+      g.fillStyle="#0a0e1e";g.beginPath();g.arc(62,54,18,0,7);g.fill();
+      for(let i=0;i<26;i++){g.fillStyle="rgba(255,255,255,"+(.3+Math.random()*.6)+")";g.fillRect(Math.random()*w,Math.random()*h*.6,1.6,1.6);}
+      for(let i=0;i<10;i++){g.fillStyle="rgba(255,200,120,"+(.3+Math.random()*.5)+")";g.fillRect(20+Math.random()*200,170+Math.random()*70,5,7);}
+    } else { const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,"#9fb2c8");gr.addColorStop(1,"#e8d9b8");
+      g.fillStyle=gr;g.fillRect(0,0,w,h);
+      g.fillStyle="rgba(255,255,255,.8)";g.beginPath();g.arc(170,70,26,0,7);g.arc(140,80,20,0,7);g.fill();
+      g.fillStyle="#5b647a";[40,90,200].forEach((x,i)=>g.fillRect(x,150+i*8,34,110)); }
+  })}),0.052,1.7,0,0,Math.PI/2);
+  view.userData.noHL=true;
+  add(win,view);
+  add(win, B(0.12,1.7,0.07,M(0x20242e),0.01,1.7,0), B(0.12,0.07,1.9,M(0x20242e),0.01,1.7,0));
+  at(win,-4.45,0,-1.2); sc.add(win);
+  // cortina
+  sc.add(B(0.1,1.9,0.5,M(night?0x2a3146:0x4a5470),-4.36,1.65,-0.05));
+  // luz da janela
+  if(!night){ sc.add(pt(0xffe9c4,0.9,12,-3.6,2,-1.2));
+    const ray=coneGlow(0xffe2b0,1.6,5,-2.6,1.4,-0.6,0.05); ray.rotation.z=Math.PI/2.4; sc.add(ray);
+  } else { sc.add(pt(0x9fb8ff,0.35,9,-3.8,2,-1.2));
+    const lamp=pt(0xffb454,0.85,8,1.4,2.5,0.4); sc.add(lamp);
+    sc.add(Sp(0.09,MB({color:0xffd9a0}),1.4,2.62,0.4));
+    sc.add(Cy(0.015,0.015,0.32,M(0x111),1.4,2.8,0.4));
+    ANIM.push(t=>{lamp.intensity=0.85+Math.sin(t*9)*0.02;});
+  }
+  sc.add(new THREE.AmbientLight(night?0x36405e:0x6a7488, night?0.55:0.7));
+  sc.add(pt(night?0x6a7aa8:0xc9d2e4,0.5,16,0,2.7,1.5));
+  // ----- cama -----
+  const bed=G();
+  add(bed, B(2.15,0.32,1.55,M(0x33271c),0,0.3,0));
+  add(bed, B(2.05,0.2,1.45,M(night?0x3a4260:0x6a7494),0,0.55,0));
+  add(bed, B(0.16,0.85,1.55,M(0x2a2018),-1.07,0.42,0));
+  const blk=B(1.35,0.16,1.5,M(night?0x46507a:0x8a93b4),0.34,0.66,0.05); blk.rotation.z=0.05; add(bed,blk);
+  add(bed, B(0.62,0.14,0.42,M(0xb8c0d8),-0.68,0.68,-0.42,0.12));
+  add(bed, disc(1.25,0.1,0));
+  at(bed,-2.7,0,-2.2); sc.add(hot(bed, night?"Cama":"Cama desfeita"));
+  // mesa de cabeceira + celular
+  const ns=G(); add(ns, B(0.5,0.55,0.45,M(0x3a2d20),0,0.28,0), B(0.42,0.1,0.36,M(0x241a10),0,0.4,0.02));
+  at(ns,-1.25,0,-2.9); sc.add(ns);
+  if(!hasItem("celular")||true){
+    const ph=B(0.09,0.02,0.17,M(0x10141f,{roughness:0.3}),-1.25,0.575,-2.86,0.4);
+    if(!night) sc.add(hot(ph,"Celular (2%)")); else sc.add(ph);
+  }
+  // sapatos + calça
+  if(!night){
+    const sh=G();
+    add(sh, B(0.13,0.09,0.33,M(0x4a2e1a),-0.09,0.05,0,0.25), B(0.13,0.09,0.33,M(0x4a2e1a),0.12,0.05,0.06,-0.18));
+    add(sh, B(0.14,0.02,0.34,M(0x7a4330),-0.09,0.012,0,0.25), B(0.14,0.02,0.34,M(0x7a4330),0.12,0.012,0.06,-0.18));
+    at(sh,-1.5,0,-0.7); sc.add(hot(sh,"Sapatos"));
+    const pj=G();
+    add(pj, B(0.7,0.05,0.4,M(0x28304a),0,0.03,0,0.3), B(0.5,0.05,0.34,M(0x222a40),0.3,0.06,0.16,-0.4));
+    at(pj,-0.5,0,0.2); sc.add(hot(pj,"Calça de ontem"));
+  }
+  // cadeira + jaqueta
+  const ch=G();
+  [[-0.22,-0.2],[0.22,-0.2],[-0.22,0.2],[0.22,0.2]].forEach(p=>add(ch, B(0.05,0.46,0.05,M(0x33271c),p[0],0.23,p[1])));
+  add(ch, B(0.52,0.05,0.48,M(0x41311f),0,0.48,0), B(0.52,0.55,0.05,M(0x41311f),0,0.78,-0.21));
+  if(!night||true){
+    const jk=G();
+    add(jk, B(0.56,0.5,0.12,M(0x37415f),0,0.85,-0.2,0.04), B(0.2,0.4,0.1,M(0x303a56),-0.3,0.6,-0.16,0.3));
+    add(ch,jk);
+  }
+  at(ch,1.15,0,0.5,-0.5); sc.add(night?ch:hot(ch,"Jaqueta na cadeira"));
+  // ----- parede da guitarra: silhueta de poeira -----
+  const sil=Pl(1.5,1.5,MB({map:ctex(256,256,(g,w,h)=>{
+    g.clearRect(0,0,w,h);
+    g.fillStyle="rgba(255,255,255,.045)";g.fillRect(0,0,w,h);
+    g.strokeStyle="rgba(10,12,18,.55)";g.lineWidth=20;g.lineCap="round";
+    g.beginPath();g.arc(108,170,44,0,7);g.stroke();
+    g.beginPath();g.moveTo(132,140);g.lineTo(190,52);g.stroke();
+  }),transparent:true}),0.4,1.78,-3.69);
+  sil.userData.noHL=true;
+  const sup=G(); add(sup,sil, B(0.3,0.08,0.1,M(0x241a10),0.62,2.1,-3.66), Sp(0.025,M(0x111),0.55,2.1,-3.6), Sp(0.025,M(0x111),0.69,2.1,-3.6));
+  if(!night) sc.add(hot(sup,"Suporte vazio na parede")); else sc.add(sup);
+  // pôsteres rock
+  sc.add(Pl(0.85,1.25,MB({map:posterTex(["VÉRTICE","AO VIVO","BAR SUBSOLO","SEX · 22H"],"#ff4d7d")}),-1.4,1.8,-3.685,0,0,0.03));
+  sc.add(Pl(0.8,1.2,MB({map:posterTex(["RUÍDO","FESTIVAL","3 PALCOS","2017"],"#5ad0c5","#101a1c")}),4.47,1.7,1.9,0,-Math.PI/2,-0.02));
+  // ----- estante -----
+  const sh2=G();
+  add(sh2, B(1.5,2.1,0.36,M(0x33271c),0,1.05,0));
+  for(let i=0;i<3;i++) add(sh2, B(1.34,0.05,0.3,M(0x241a10),0,0.5+i*0.55,0.02));
+  for(let i=0;i<6;i++) add(sh2, B(0.09,0.34-(i%3)*0.05,0.22,M([0x7a4a3a,0x3a5a6a,0x6a6a3a,0x4a3a5a,0x5a4a2a,0x6a3a3a][i]),-0.5+i*0.18,1.42,0.04));
+  const cx=B(0.5,0.3,0.3,M(0x8a744a),-0.3,0.72,0.04,0.12);
+  add(sh2,cx);
+  at(sh2,2.6,0,-3.5); sc.add(sh2);
+  const cxh=G(); add(cxh,B(0.52,0.32,0.32,M(0x8a744a,{transparent:true,opacity:0}),0,0,0));
+  at(cxh,2.3,0.72,-3.46); sc.add(hot(cxh,"Caixa de cartas antigas"));
+  // ----- armário + caixa PAI / rádio -----
+  const wd=G();
+  add(wd, B(1.4,2.2,0.6,M(0x41311f),0,1.1,0), B(0.02,2.1,0.02,M(0x241a10),0,1.1,0.3));
+  add(wd, Sp(0.035,M(0x241a10),-0.12,1.1,0.31), Sp(0.035,M(0x241a10),0.12,1.1,0.31));
+  const paiBox=B(0.6,0.34,0.4,M(0xcdb88e,{map:paperTex("PAI",[""],0)}),0,2.38,0);
+  add(wd,paiBox);
+  at(wd,3.9,0,-2.4,-0.2); sc.add(wd);
+  if(night){
+    const rd=G();
+    add(rd, B(0.56,0.3,0.2,M(0x5a4a3a),0,0.15,0), Cy(0.09,0.09,0.04,M(0x33291f),-0.13,0.15,0.105).rotateX(Math.PI/2));
+    add(rd, B(0.2,0.1,0.02,M(0x22180f),0.12,0.18,0.1), Cy(0.006,0.006,0.5,M(0x9a8a70),0.2,0.45,0));
+    at(rd,3.55,2.2,-2.1,-0.25); sc.add(hot(rd,"Rádio-gravador do pai"));
+    sc.add(pt(0xffb454,0.3,3,3.5,2.5,-1.8));
+    const gt=guitarMesh(); at(gt,2.2,0.02,1.15,0.5); gt.rotation.z=-0.18; sc.add(gt); sc.add(disc(0.3,2.2,1.15));
+  }
+  // ----- cozinha: geladeira + bancada/gaveta -----
+  const fr=G();
+  add(fr, B(0.8,1.9,0.7,M(night?0x49506a:0x9aa3b8,{roughness:0.4}),0,0.95,0));
+  add(fr, B(0.8,0.02,0.7,M(0x2a3040),0,1.25,0.01));
+  add(fr, B(0.03,0.34,0.04,M(0x2a3040),0.34,1.5,0.36), B(0.03,0.5,0.04,M(0x2a3040),0.34,0.85,0.36));
+  add(fr, Pl(0.26,0.3,MB({map:ctex(64,80,(g)=>{g.fillStyle="#d8c8a0";g.fillRect(0,0,64,80);
+    g.fillStyle="#7a5a8a";g.beginPath();g.moveTo(10,58);g.lineTo(24,30);g.lineTo(32,44);g.lineTo(44,22);g.lineTo(54,58);g.fill();
+    g.fillStyle="#caa14b";g.beginPath();g.arc(14,16,6,0,7);g.fill();})}),0.1,1.55,0.355));
+  at(fr,-3.95,0,2.4,Math.PI/2); sc.add(night?fr:hot(fr,"Geladeira"));
+  const ct=G();
+  add(ct, B(1.6,0.9,0.6,M(0x3a3026),0,0.45,0), B(1.6,0.05,0.62,M(0x55483a),0,0.92,0));
+  const dr=B(0.7,0.22,0.05,M(0x241c12),-0.3,0.62,0.31); add(ct,dr, B(0.24,0.04,0.03,M(0x8a7a5a),-0.3,0.62,0.345));
+  at(ct,-3.6,0,3.35,Math.PI); sc.add(ct);
+  const drh=G(); add(drh,B(0.74,0.26,0.1,M(0x241c12,{transparent:true,opacity:0}),0,0,0));
+  at(drh,-3.3,0.62,3.05); sc.add(hot(drh,"Gaveta da cozinha"));
+  // ----- sofá + controle -----
+  const sf=G();
+  add(sf, B(2,0.45,0.85,M(night?0x3a2e3e:0x6a4a5e),0,0.32,0));
+  add(sf, B(2,0.55,0.22,M(night?0x46384a:0x7c5a70),0,0.72,-0.32));
+  add(sf, B(0.24,0.62,0.85,M(night?0x46384a:0x7c5a70),-1.02,0.5,0), B(0.24,0.62,0.85,M(night?0x46384a:0x7c5a70),1.02,0.5,0));
+  add(sf, B(0.85,0.12,0.7,M(night?0x42344a:0x755268),-0.45,0.58,0.02), B(0.85,0.12,0.7,M(night?0x42344a:0x755268),0.45,0.58,0.02));
+  add(sf, disc(1.15,0,0));
+  at(sf,3.1,0,1.2,-Math.PI/2); sc.add(sf);
+  if(!night){
+    const cg=G();
+    add(cg, B(0.17,0.05,0.12,M(0x1c2233),0,0.03,0,0.4), Sp(0.025,M(0x4a5878),0.05,0.06,0.02), Sp(0.025,M(0x4a5878),-0.04,0.06,-0.02));
+    at(cg,2.75,0.64,1.05); sc.add(hot(cg,"Controle de videogame"));
+  }
+  // ----- porta + chaves + espelho -----
+  const door=G();
+  add(door, B(1.06,2.26,0.14,M(0x33271c),0,1.13,0), B(0.9,2.1,0.05,M(0x41311f),0,1.1,0.05));
+  add(door, Sp(0.045,M(0xcaa14b,{metalness:0.6,roughness:0.3}),-0.34,1.05,0.1));
+  at(door,4.46,0,2.6,-Math.PI/2); sc.add(hot(door,"Porta — sair"));
+  const keys=G();
+  add(keys, THREE.Object3D?Cy(0.035,0.035,0.012,M(0xcaa14b,{metalness:0.6}),0,0,0).rotateX(Math.PI/2):G());
+  add(keys, B(0.014,0.09,0.012,M(0xcaa14b,{metalness:0.6}),0,-0.07,0), B(0.03,0.012,0.012,M(0xcaa14b,{metalness:0.6}),0.012,-0.1,0));
+  at(keys,4.38,1.06,2.18);
+  if(!night) sc.add(hot(keys,"Chaves na porta")); else sc.add(keys);
+  const mir=G();
+  add(mir, B(0.62,1.3,0.05,M(0x23283a),0,0,0), Pl(0.5,1.16,M(night?0x39435f:0x8a96b2,{roughness:0.15,metalness:0.7}),0,0,0.03));
+  at(mir,4.46,1.55,0.9,-Math.PI/2);
+  if(!night) sc.add(hot(mir,"Espelho")); else sc.add(mir);
+  // tapete
+  sc.add(Pl(2.2,1.5,M(0x33303c,{map:plasterTex("#3c3548")}),0,0.013,1.0,-Math.PI/2));
+  return {scene:sc,cam:[0.1,1.55,3.3],look:[-0.2,1.25,-1.2]};
+}
+
+/* ---------- BAR SUBSOLO ---------- */
+BUILD3D.bar=function(){
+  const sc=new THREE.Scene();
+  sc.fog=new THREE.Fog(0x0c0712,5,20);
+  roomShell(sc,12,9,3.3, M(0x1a1216,{map:woodTex("#241419","#160c10")}), M(0x241a20,{map:brickTex()}), M(0x140d14));
+  sc.add(new THREE.AmbientLight(0x4a3550,0.5));
+  // ----- letreiro neon SUBSOLO -----
+  const neon=Pl(4.6,1.15,MB({map:neonTex("SUBSOLO","#ff4d7d","· desde 2009 ·")}),0,2.45,-4.47);
+  neon.userData.noHL=true; sc.add(neon);
+  const nlt=pt(0xff4d7d,1.5,11,0,2.3,-3.4); sc.add(nlt);
+  ANIM.push(t=>{ nlt.intensity=1.5+Math.sin(t*22)*0.05+(Math.sin(t*3.1)>0.97?-0.7:0); });
+  // ----- palco -----
+  const stg=G();
+  add(stg, B(4.4,0.42,3,M(0x231218),0,0.21,0));
+  add(stg, B(4.4,0.04,3.04,M(0x36202a),0,0.44,0));
+  add(stg, Pl(4.3,1.9,M(0x3a1420,{map:plasterTex("#3a1420")}),0,1.45,-1.45));
+  // bateria
+  const kick=Cy(0.42,0.42,0.36,M(0x5a2a3a,{roughness:0.4}),-1.2,0.88,-0.5); kick.rotation.x=Math.PI/2; add(stg,kick);
+  add(stg, Cy(0.43,0.43,0.02,MB({color:0xe8dfd0}),-1.2,0.88,-0.31).rotateX(Math.PI/2));
+  add(stg, Cy(0.2,0.2,0.16,M(0x5a2a3a),-0.75,1.1,-0.75), Cy(0.012,0.012,0.66,M(0x8a8a92),-0.75,0.77,-0.75));
+  [[-1.7,-0.9],[-0.65,-1.15]].forEach(p=>{ add(stg, Cy(0.24,0.24,0.015,M(0xcaa14b,{metalness:0.7,roughness:0.25}),p[0],1.5,p[1]), Cy(0.011,0.011,1.05,M(0x8a8a92),p[0],0.95,p[1])); });
+  // amplificadores
+  [[0.4,-1.0],[1.5,-1.1]].forEach((p,i)=>{
+    add(stg, B(0.8,0.8,0.5,M(0x191017),p[0],0.84,p[1]));
+    add(stg, Pl(0.66,0.62,MB({map:ctex(64,64,(g)=>{g.fillStyle="#0c060a";g.fillRect(0,0,64,64);
+      g.strokeStyle="#4a3a42";g.lineWidth=3;g.beginPath();g.arc(32,32,22,0,7);g.stroke();
+      g.beginPath();g.arc(32,32,8,0,7);g.stroke();})}),p[0],0.84,p[1]+0.252));
+  });
+  // microfone
+  add(stg, Cy(0.012,0.012,1.5,M(0x8a8a92),0.3,1.2,0.7), Sp(0.07,M(0x3a3a44,{roughness:0.5}),0.3,1.98,0.7));
+  add(stg, B(0.5,0.04,0.5,M(0x2a2a32),0.3,0.46,0.7));
+  // setlist no chão do palco
+  add(stg, Pl(0.3,0.4,MB({map:paperTex("SETLIST",["1 Vinil Riscado","2 Quina d.Mundo","3 Vértice","4 ███","5 Nove e Meia","6 Sinal Fechado","7 ███"],0)}),0.85,0.45,0.9,-Math.PI/2,0,0.35));
+  // spots de show
+  [[-2.2,0xff4d7d],[1.6,0x5ad0c5]].forEach(p=>{
+    const cone=coneGlow(p[1],0.9,2.6,p[0],1.8,-0.5,0.09); cone.rotation.x=0.18; add(stg,cone);
+    add(stg, pt(p[1],0.9,6,p[0],2.9,-0.4));
+    add(stg, Cy(0.12,0.18,0.24,M(0x111),p[0],3.05,-0.9));
+  });
+  at(stg,-3.1,0,-2.6); sc.add(hot(stg,"Palco e setlist"));
+  // ----- jukebox -----
+  const jb=G();
+  add(jb, B(1.0,1.35,0.62,M(0x4a2230,{roughness:0.4}),0,0.67,0));
+  const top=Cy(0.5,0.5,0.62,M(0x4a2230,{roughness:0.4}),0,1.35,0); top.rotation.x=Math.PI/2;
+  top.scale.set(1,1,1); add(jb,top);
+  add(jb, Pl(0.8,1.1,MB({map:ctex(128,196,(g,w,h)=>{
+    g.fillStyle="#180a12";g.fillRect(0,0,w,h);
+    g.strokeStyle="#ffd34d";g.lineWidth=6;g.beginPath();g.arc(w/2,70,46,Math.PI,0);g.stroke();
+    g.strokeStyle="#5ad0c5";g.lineWidth=5;g.beginPath();g.arc(w/2,74,33,Math.PI,0);g.stroke();
+    g.fillStyle="#e9dfc6";g.fillRect(24,96,80,52);
+    g.strokeStyle="#8a7a52";for(let i=0;i<4;i++){g.beginPath();g.moveTo(30,106+i*12);g.lineTo(98,106+i*12);g.stroke();}
+    ["#ffd34d","#ff4d7d","#5ad0c5"].forEach((c,i)=>{g.fillStyle=c;g.beginPath();g.arc(34+i*30,170,9,0,7);g.fill();});
+  })}),0,0.95,0.318));
+  add(jb, pt(0xffd34d,0.6,3.4,0,1.3,0.6));
+  add(jb, disc(0.62,0,0.1));
+  at(jb,-0.2,0,-4.0); sc.add(hot(jb,"Jukebox"));
+  // ----- balcão -----
+  const bar=G();
+  add(bar, B(4.6,1.0,0.8,M(0x33231a),0,0.5,0), B(4.8,0.09,0.95,M(0x4a3220,{map:woodTex("#5a3d26","#41311f")}),0,1.04,0));
+  for(let i=0;i<4;i++) add(bar, B(0.5,0.7,0.04,M(0x241810),-1.7+i*1.15,0.5,0.42));
+  at(bar,2.7,0,-2.0,-Math.PI/2.6); sc.add(bar);
+  // prateleira de garrafas retroiluminada
+  const shelf=G();
+  add(shelf, B(3.6,0.06,0.3,M(0x2a1c12),0,1.7,0), B(3.6,0.06,0.3,M(0x2a1c12),0,2.25,0));
+  add(shelf, Pl(3.6,1.0,MB({color:0xff7a4d,transparent:true,opacity:0.14,blending:THREE.AdditiveBlending}),0,2.0,-0.14));
+  const cols=[0x7a3a2a,0x3a6a5a,0x6a5a2a,0x5a3a6a,0x3a4a7a,0x8a5a2a];
+  for(let i=0;i<9;i++) add(shelf, Cy(0.05,0.06,0.34+(i%3)*0.07,M(cols[i%6],{roughness:0.25}),-1.55+i*0.39,1.92+(0.34+(i%3)*0.07)/2-0.17+0.06,0));
+  for(let i=0;i<7;i++) add(shelf, Cy(0.05,0.06,0.3+(i%2)*0.08,M(cols[(i+3)%6],{roughness:0.25}),-1.4+i*0.47,2.45,0));
+  add(shelf, pt(0xff9a5d,0.7,5,0,2.0,0.5));
+  at(shelf,4.42,0,-2.0,-Math.PI/2); sc.add(shelf);
+  // Tonho
+  const tn=dude({shirt:0xcfc8b6,pants:0x23262e,skin:0xc79a72,hair:null,beard:0x5a5a64,apron:0x23262e});
+  at(tn,3.15,0,-2.35,-Math.PI/2.6+Math.PI); // de frente para o balcão
+  at(tn,3.15,0,-2.35, Math.PI/3.2);
+  ANIM.push(t=>{ tn.children[2].rotation.z=Math.sin(t*2.2)*0.04; });
+  sc.add(hot(tn,"Tonho"));
+  // chaveiro no balcão (condicional)
+  if(S.f.setlist&&!S.f.chaveiro){
+    const kc=G();
+    add(kc, B(0.06,0.012,0.1,MB({color:0xff8a3d}),0,0,0,0.4), Cy(0.025,0.025,0.008,M(0x9aa4ba,{metalness:0.7}),-0.05,0,-0.05).rotateX(Math.PI/2));
+    add(kc, pt(0xff8a3d,0.35,0.9,0,0.12,0));
+    at(kc,2.2,1.1,-1.55); sc.add(hot(kc,"Chaveiro esquecido"));
+  }
+  // banquetas
+  for(let i=0;i<4;i++){ const st=G();
+    add(st, Cy(0.21,0.21,0.07,M(0x5a2a3a,{roughness:0.4}),0,0.72,0), Cy(0.03,0.05,0.7,M(0x23262e),0,0.36,0), disc(0.2,0,0));
+    at(st,1.45+Math.cos(i)*0.1,0,-0.6-i*0.75); sc.add(st);
+  }
+  // lixeira
+  const tr=G();
+  add(tr, Cy(0.26,0.21,0.62,M(0x3a4048),0,0.31,0), Cy(0.28,0.28,0.05,M(0x4a525c),0,0.64,0));
+  add(tr, B(0.16,0.05,0.1,M(0xcfc8b6),0.05,0.69,0,0.4), disc(0.3,0,0));
+  at(tr,4.0,0,1.6); sc.add(hot(tr,"Lixeira"));
+  // mesas com cadeiras viradas
+  [[-1.6,1.6],[0.6,2.3]].forEach(p=>{
+    const tb=G();
+    add(tb, Cy(0.45,0.45,0.04,M(0x33231a),0,0.78,0), Cy(0.04,0.07,0.78,M(0x241810),0,0.39,0), disc(0.42,0,0));
+    add(tb, B(0.4,0.05,0.4,M(0x2a1c12),0,0.84,0.12,0.6), B(0.4,0.4,0.05,M(0x2a1c12),0,1.04,0.32,0.6));
+    at(tb,p[0],0,p[1]); sc.add(tb);
+  });
+  // porta de saída com placa
+  const dx=G();
+  add(dx, B(1.1,2.3,0.14,M(0x241a20),0,1.15,0), B(0.94,2.14,0.05,M(0x33231a),0,1.13,0.05));
+  add(dx, Pl(0.5,0.18,MB({map:ctex(128,48,(g)=>{g.fillStyle="#200a0e";g.fillRect(0,0,128,48);
+    g.fillStyle="#ff5d5d";g.shadowColor="#ff5d5d";g.shadowBlur=10;g.font="700 26px monospace";g.textAlign="center";g.fillText("SAÍDA",64,33);})}),0,2.42,0.08));
+  add(dx, pt(0xff5d5d,0.3,2.4,0,2.4,0.4));
+  at(dx,-4.43,0,2.2,Math.PI/2); sc.add(hot(dx,"Sair do bar"));
+  // grafite + pôster
+  sc.add(Pl(2.6,1.3,MB({map:grafTex(),transparent:true}),-2.4,1.5,4.46,0,Math.PI,0));
+  sc.add(Pl(0.85,1.25,MB({map:posterTex(["VÉRTICE","HOJE · 22H","+ convidados","couvert 15"],"#ffd34d")}),2.6,1.7,-4.46));
+  // luminárias de fio
+  for(let i=0;i<5;i++){
+    const x=-3.4+i*1.7;
+    sc.add(Cy(0.006,0.006,0.5,M(0x111),x,3.05,0.6));
+    sc.add(Sp(0.05,MB({color:0xffd9a0}),x,2.78,0.6));
+    sc.add(pt(0xffb454,0.32,3.6,x,2.7,0.6));
+  }
+  return {scene:sc,cam:[0.4,1.6,3.6],look:[-0.4,1.35,-1.6]};
+};
+
+/* ---------- O QUARTEIRÃO (rua, entardecer) ---------- */
+function streetLamp(sc,x,z){
+  const g=G();
+  add(g, Cy(0.05,0.07,3.6,M(0x2a2a32),0,1.8,0), B(0.7,0.06,0.08,M(0x2a2a32),0.32,3.55,0));
+  add(g, Sp(0.09,MB({color:0xffd9a0}),0.62,3.48,0));
+  add(g, pt(0xffaa55,0.85,7.5,0.62,3.3,0), coneGlow(0xffc46a,1.1,3.2,0.62,1.9,0,0.05), disc(0.5,0.6,0,0.25));
+  at(g,x,0,z); sc.add(g);
+}
+function facade(sc,x,z,w,h,col,ry=0){
+  const f=G();
+  add(f, B(w,h,0.5,M(col,{map:plasterTex()}),0,h/2,0));
+  add(f, Pl(w*0.92,h*0.86,MB({map:winTex()}),0,h/2,0.26));
+  at(f,x,0,z,ry); sc.add(f);
+}
+BUILD3D.rua=function(){
+  const sc=new THREE.Scene();
+  sc.background=skyTex([[0,"#2a2440"],[0.55,"#6a3a52"],[1,"#c46a48"]]);
+  sc.fog=new THREE.Fog(0x46304a,9,42);
+  sc.add(new THREE.AmbientLight(0x6a5070,0.62));
+  const hemi=new THREE.HemisphereLight(0x8a5a7a,0x1a1420,0.5); sc.add(hemi);
+  // chão: asfalto + calçada
+  sc.add(Pl(46,40,M(0x1d1d24,{map:asphaltTex()}),0,0,-6,-Math.PI/2));
+  sc.add(B(46,0.16,5.4,M(0x33303c,{map:plasterTex("#3a3744")}),0,0.08,-8.6));
+  for(let i=0;i<8;i++) sc.add(Pl(1.1,0.16,MB({color:0xd8c46a,transparent:true,opacity:0.5}),-14+i*4,0.012,-2.2,-Math.PI/2));
+  // fachadas de fundo
+  facade(sc,-9,-11.5,7,7,0x241c2a);
+  facade(sc, 9.5,-11.5,8,8.5,0x2a2030);
+  facade(sc, 0,-11.8,9,6,0x201a28);
+  facade(sc,-17,-9,8,10,0x1c1622,0.3);
+  facade(sc, 17,-9,8,9,0x1c1622,-0.3);
+  // grafite num muro
+  const muro=G();
+  add(muro, B(6,2.2,0.3,M(0x2e2430,{map:brickTex("#2a2030","#1a141f")}),0,1.1,0));
+  add(muro, Pl(5.2,1.8,MB({map:grafTex(),transparent:true}),0,1.15,0.17));
+  at(muro,-13.5,0,-5.5,0.5); sc.add(muro);
+  // ----- FOOD TRUCK -----
+  const ft=G();
+  add(ft, B(4.4,2.3,2.2,M(0xb8452a,{roughness:0.45}),0,1.55,0));
+  add(ft, B(4.4,0.5,2.22,M(0x8c2f1c,{roughness:0.45}),0,2.55,0));
+  add(ft, Pl(3.4,0.42,MB({map:ctex(512,64,(g,w,h)=>{g.fillStyle="#8c2f1c";g.fillRect(0,0,w,h);
+    g.fillStyle="#ffd9a0";g.font="italic 800 40px Georgia";g.textAlign="center";g.fillText("PASTEL DO EDMILSON",w/2,45);})}),0,2.55,1.115));
+  // janela de atendimento
+  add(ft, B(2.6,1.1,0.1,M(0x2a1410),-0.3,1.65,1.08));
+  add(ft, B(2.7,0.08,0.5,M(0xe8b84a),-0.3,1.08,1.25));
+  add(ft, Pl(2.5,1.0,MB({color:0x1a0c08}),-0.3,1.66,1.14));
+  // toldo listrado
+  const toldo=Pl(3.0,1.0,MB({map:ctex(128,64,(g,w,h)=>{for(let i=0;i<8;i++){g.fillStyle=i%2?"#d8a23a":"#8c2f1c";g.fillRect(i*16,0,16,64);}}),side:THREE.DoubleSide}),-0.3,2.6,1.7,-0.9);
+  add(ft,toldo);
+  // rodas + balcão lateral
+  [[-1.5],[1.5]].forEach(p=>{ const wh=Cy(0.42,0.42,0.3,M(0x16161c),p[0],0.42,1.0); wh.rotation.x=Math.PI/2; add(ft,wh);
+    add(ft, Cy(0.16,0.16,0.32,M(0x3a3644),p[0],0.42,1.0).rotateX(Math.PI/2)); });
+  add(ft, Pl(4.6,0.6,MB({color:0x000,transparent:true,opacity:0.3}),0,0.015,0.4,-Math.PI/2));
+  // varal de lâmpadas
+  for(let i=0;i<7;i++){ const tt=i/6, bx=-2.1+tt*4.2, by=2.95+Math.sin(Math.PI*tt)*0.5;
+    add(ft, Sp(0.045,MB({color:0xffd9a0}),bx,by,1.3)); }
+  add(ft, pt(0xffb454,1.1,7,0,2.6,1.8));
+  // Edmilson na janela
+  const ed=dude({shirt:0xe8e2d2,skin:0xa97950,cap:true,capCol:0xb8452a,beard:0x4a4a52,apron:0x4a4a52});
+  ed.scale.set(0.96,0.96,0.96); at(ed,-0.3,0.5,0.5,0); add(ft,ed);
+  // fumaça do óleo
+  const sm=Sp(0.16,MB({color:0xcfc8b6,transparent:true,opacity:0.18}),1.2,2.4,1.2);
+  add(ft,sm); ANIM.push(t=>{sm.position.y=2.4+Math.sin(t*1.2)*0.25; sm.material.opacity=0.12+Math.sin(t*1.7)*0.06;});
+  at(ft,-6.2,0,-4.2,0.5); sc.add(hot(ft,"Food truck — Seu Edmilson"));
+  // ----- FARMÁCIA -----
+  const fm=G();
+  add(fm, B(5.6,3.6,1.2,M(0x1e2a2a,{map:plasterTex("#1e2a2a")}),0,1.8,0));
+  add(fm, Pl(4.6,2.0,MB({color:0x0e2f24,transparent:true,opacity:0.92}),0,1.45,0.62));
+  add(fm, pt(0x3ddc84,1.0,8,0,2.0,1.6));
+  add(fm, Pl(3.6,0.6,MB({map:ctex(512,80,(g,w,h)=>{g.fillStyle="#0c2018";g.fillRect(0,0,w,h);
+    g.fillStyle="#aef2cc";g.shadowColor="#3ddc84";g.shadowBlur=14;g.font="700 44px monospace";g.textAlign="center";g.fillText("F A R M A  2 4 H",w/2,55);})}),0,3.25,0.63));
+  // cruz neon pulsante
+  const cruz=G();
+  add(cruz, B(0.22,0.8,0.1,MB({color:0x3ddc84})), B(0.8,0.22,0.1,MB({color:0x3ddc84})));
+  const czl=pt(0x3ddc84,1.2,6,0,0,0.6); add(cruz,czl);
+  at(cruz,-2.4,3.0,0.7); add(fm,cruz);
+  ANIM.push(t=>{ const p=0.75+Math.abs(Math.sin(t*2.4))*0.5; czl.intensity=p;
+    cruz.children[0].material.opacity=1; });
+  // prateleiras atrás do vidro
+  for(let i=0;i<3;i++) add(fm, B(1.2,0.5,0.2,M(0x1a3a30),-1.6+i*1.6,1.8,0.45));
+  // Dona Cida atrás do balcão
+  const cd=dude({shirt:0xe7ecef,skin:0xe0b896,hair:0xd8d4cc});
+  cd.scale.set(0.92,0.92,0.92); at(cd,0.4,0,0.2,0); add(fm,cd);
+  add(fm, B(2.2,0.95,0.4,M(0x10241e),0.4,0.48,0.7));
+  at(fm,0.6,0,-9.0,0); sc.add(hot(fm,"Farmácia 24h — Dona Cida"));
+  // ----- PONTO DE TÁXI -----
+  const tx=G();
+  // placa
+  add(tx, Cy(0.05,0.06,3.0,M(0x4a4a55),0,1.5,0));
+  add(tx, Pl(1.2,0.45,MB({map:ctex(256,96,(g,w,h)=>{g.fillStyle="#caa83a";g.fillRect(0,0,w,h);
+    g.fillStyle="#241a02";g.font="800 64px monospace";g.textAlign="center";g.fillText("TÁXI",w/2,70);}),side:THREE.DoubleSide}),0,3.0,0));
+  // quadro de tarifas
+  add(tx, B(1.3,1.0,0.07,M(0x2a2630),1.4,1.7,0));
+  add(tx, Pl(1.14,0.84,MB({map:ledTex([{t:"TARIFAS · ESCALA",c:"#d8c46a"},{t:"BAND.2  R$ 7,50",c:"#9aa4ba"},{t:"KM      R$ 4,12",c:"#9aa4ba"},{t:"PLANTÃO: NILTON",c:"#5b647a"}])}),1.4,1.7,0.045));
+  // carro
+  const car=G();
+  add(car, B(3.4,0.62,1.5,M(0xe8c43a,{roughness:0.35,metalness:0.15}),0,0.62,0));
+  add(car, B(1.8,0.55,1.4,M(0xe8c43a,{roughness:0.35}),-0.1,1.18,0));
+  add(car, Pl(1.5,0.4,MB({color:0x10141f}),-0.1,1.2,0.71), Pl(1.5,0.4,MB({color:0x10141f}),-0.1,1.2,-0.71,0,Math.PI));
+  add(car, B(0.55,0.16,0.3,MB({color:0xfff2c4}),-0.1,1.55,0));
+  [[-1.15],[1.15]].forEach(p=>{ const w1=Cy(0.34,0.34,0.26,M(0x16161c),p[0],0.34,0.78); w1.rotation.x=Math.PI/2; add(car,w1);
+    const w2=Cy(0.34,0.34,0.26,M(0x16161c),p[0],0.34,-0.78); w2.rotation.x=Math.PI/2; add(car,w2); });
+  add(car, Pl(3.6,1.8,MB({color:0x000,transparent:true,opacity:0.3}),0,0.013,0,-Math.PI/2));
+  at(car,0.4,0,1.9,0.35); add(tx,car);
+  // Nilton encostado
+  const nl=dude({shirt:0xcaa83a,pants:0x2a2630,skin:0x8a6242,cap:true,capCol:0x2e4866});
+  at(nl,-0.9,0,1.2,0.5); add(tx,nl);
+  at(tx,7.0,0,-5.0,-0.3); sc.add(hot(tx,"Ponto de táxi"));
+  // postes
+  streetLamp(sc,-2.5,-2.6); streetLamp(sc,12,-3.2); streetLamp(sc,-12,-2.8);
+  // placa "Ir para…"
+  const ir=G();
+  add(ir, Cy(0.035,0.04,2.2,M(0x2a2a32),0,1.1,0));
+  add(ir, Pl(1.0,0.36,MB({map:ctex(256,80,(g,w,h)=>{g.fillStyle="#10241e";g.fillRect(0,0,w,h);
+    g.fillStyle="#5ad0c5";g.font="700 38px monospace";g.textAlign="center";g.fillText("⟵ MAPA",w/2,52);}),side:THREE.DoubleSide}),0,2.1,0));
+  at(ir,-3.4,0,2.6,0.4); sc.add(hot(ir,"Ir para…"));
+  return {scene:sc,cam:[0.4,1.62,5.6],look:[0,1.35,-5]};
+};
+
+/* ---------- RODOVIÁRIA CENTRAL ---------- */
+BUILD3D.rodo=function(){
+  const sc=new THREE.Scene();
+  sc.background=skyTex([[0,"#05070f"],[1,"#10182c"]]);
+  sc.fog=new THREE.Fog(0x0c1120,10,46);
+  sc.add(new THREE.AmbientLight(0x44506e,0.55));
+  // piso e teto do saguão
+  sc.add(Pl(30,24,M(0x262932,{map:tileTex()}),0,0,-4,-Math.PI/2));
+  sc.add(B(30,0.5,24,M(0x1c2030),0,5.6,-4));
+  for(let i=0;i<5;i++) sc.add(B(0.5,0.5,24,M(0x232a3c),-12+i*6,5.3,-4));
+  // colunas
+  [[-9,-10],[-9,2],[9,-10],[9,2],[0,-12]].forEach(p=>{
+    sc.add(Cy(0.4,0.46,5.4,M(0x2c3140,{map:plasterTex("#2c3140")}),p[0],2.7,p[1]));
+  });
+  // fluorescentes
+  for(let i=0;i<4;i++){ const x=-9+i*6;
+    sc.add(B(2.4,0.08,0.3,MB({color:0xcfe0ff}),x,5.1,-4));
+    const fl=pt(0xbfd4ff,0.85,12,x,4.7,-4); sc.add(fl);
+    if(i===2) ANIM.push(t=>{fl.intensity=0.85+(Math.sin(t*17)>0.92?-0.5:0);});
+  }
+  // parede do fundo + abertura para plataformas
+  sc.add(B(30,5.6,0.5,M(0x232634,{map:plasterTex("#232634")}),0,2.8,-16));
+  sc.add(Pl(8,3.4,MB({map:winTex("","#5b80b8")}),-10,2.4,-15.7));
+  sc.add(Pl(8,3.4,MB({map:winTex("","#5b80b8")}),10,2.4,-15.7));
+  // ----- guarda-volumes -----
+  const gv=G();
+  add(gv, B(4.6,3.3,0.7,M(0x2c3140),0,1.65,0));
+  add(gv, Pl(3.4,0.4,MB({map:ctex(512,64,(g,w,h)=>{g.fillStyle="#1a1f2c";g.fillRect(0,0,w,h);
+    g.fillStyle="#9aa4ba";g.font="700 34px monospace";g.textAlign="center";g.fillText("G U A R D A - V O L U M E S",w/2,44);})}),0,3.05,0.37));
+  for(let i=0;i<12;i++){ const r=(i/4|0), c=i%4, n=i+1, sete=n===7;
+    const dx=-1.65+c*1.1, dy=2.45-r*0.95;
+    const dporta=B(1.0,0.86,0.07,M(sete?0x4a3420:0x22262f,{roughness:0.5}),dx,dy,0.37);
+    add(gv,dporta);
+    add(gv, Pl(0.92,0.78,MB({map:ctex(96,80,(g)=>{g.fillStyle="rgba(0,0,0,0)";g.clearRect(0,0,96,80);
+      g.strokeStyle=sete?"#ff8a3d":"#3a4050";g.lineWidth=4;g.strokeRect(3,3,90,74);
+      g.fillStyle=sete?"#ffd9a0":"#5b647a";g.font="700 26px monospace";g.fillText(String(n).padStart(2,"0"),10,30);
+      g.fillStyle=sete?"#ff8a3d":"#10131a";g.beginPath();g.arc(78,42,7,0,7);g.fill();}),transparent:true}),dx,dy,0.41));
+    if(sete&&S.f.armario){ dporta.material.color.setHex(0x14161e); }
+  }
+  if(S.f.armario&&!hasItem("guitarra")){} // (itens já retirados)
+  add(gv, pt(0xff8a3d,0.4,3.5,0.05,1.55,1.0));
+  at(gv,-1.0,0,-14.5); sc.add(hot(gv,"Guarda-volumes — armário 7"));
+  // placa de instruções
+  const pl2=G();
+  add(pl2, Pl(0.95,0.7,MB({map:paperTex("COMO ABRIR",["1 ficha na port.","2 DIREITA ate 1º","3 ESQUERDA ate 2º","4 puxe a alavanca"],-0.02)}),0,0,0));
+  at(pl2,2.3,1.9,-15.7); sc.add(hot(pl2,"Placa de instruções"));
+  // painel de partidas
+  const pn=G();
+  add(pn, B(3.3,1.7,0.16,M(0x0a0d14),0,0,0));
+  add(pn, Pl(3.1,1.5,MB({map:ledTex([{t:"PARTIDAS · DEPARTURES",c:"#ffd34d"},{t:"DOM 07:00 LITORAL NORTE",c:"#7ddb8a"},{t:"PLATAFORMA 12 CONFIRMADO",c:"#7ddb8a"},{t:"DOM 07:40 CAPITAL  PL.03",c:"#5b647a"},{t:"DOM 08:15 SERRA    PL.07",c:"#5b647a"}])}),0,0,0.09));
+  at(pn,-8.5,3.2,-15.7); sc.add(hot(pn,"Painel de partidas"));
+  // banco de metal
+  const bn=G();
+  add(bn, B(2.4,0.07,0.5,M(0x3a4050,{metalness:0.5,roughness:0.4}),0,0.46,0));
+  add(bn, B(2.4,0.5,0.07,M(0x3a4050,{metalness:0.5,roughness:0.4}),0,0.82,-0.26));
+  [[-1.05],[1.05]].forEach(p=>add(bn, B(0.08,0.46,0.5,M(0x262b38),p[0],0.23,0)));
+  add(bn, Pl(2.6,0.8,MB({color:0x000,transparent:true,opacity:0.3}),0,0.014,0,-Math.PI/2));
+  at(bn,5.5,0,-9.5,0.3); sc.add(hot(bn,"Banco de metal"));
+  // canteiro com barro vermelho
+  const cn=G();
+  add(cn, B(3.4,0.4,1.6,M(0x3a3a44),0,0.2,0));
+  add(cn, B(3.2,0.1,1.4,M(0x7a4330,{roughness:1}),0,0.42,0));
+  for(let i=0;i<4;i++) add(cn, Cy(0.02,0.03,0.5,M(0x2e5a3a),-1.2+i*0.8,0.7,0.1), Sp(0.16,M(0x35663f),-1.2+i*0.8,0.95,0.1,10));
+  // rastro de barro no piso
+  add(cn, Pl(2.6,0.5,MB({color:0x7a4330,transparent:true,opacity:0.45}),2.4,0.015,0.6,-Math.PI/2,0,0.3));
+  add(cn, Pl(1.4,0.35,MB({color:0x7a4330,transparent:true,opacity:0.3}),4.2,0.015,1.2,-Math.PI/2,0,0.5));
+  at(cn,-5.5,0,-3.5,0.15); sc.add(hot(cn,"Canteiro (barro vermelho)"));
+  // relógio na coluna
+  const ck=G();
+  add(ck, Cy(0.5,0.5,0.1,M(0x0a0d14),0,0,0).rotateX(Math.PI/2));
+  add(ck, Pl(0.85,0.85,MB({map:ctex(128,128,(g,w,h)=>{g.clearRect(0,0,w,h);
+    g.strokeStyle="#9aa4ba";g.lineWidth=6;g.beginPath();g.arc(64,64,52,0,7);g.stroke();
+    g.strokeStyle="#ffd34d";g.lineWidth=5;g.beginPath();g.moveTo(64,64);g.lineTo(64,26);g.moveTo(64,64);g.lineTo(88,76);g.stroke();}),transparent:true}),0,0,0.08));
+  at(ck,0,4.0,-11.95); sc.add(ck);
+  // ônibus estacionado ao fundo (silhueta)
+  const bus=G();
+  add(bus, B(7,2.4,2.3,M(0x21354a),0,1.5,0), B(6.6,0.7,2.32,MB({color:0x16243a}),0,2.0,0));
+  [[-2.4],[2.4]].forEach(p=>{const w1=Cy(0.45,0.45,0.3,M(0x0c0e14),p[0],0.45,1.15);w1.rotation.x=Math.PI/2;add(bus,w1);});
+  at(bus,11,0,-19,0.2); sc.add(bus);
+  // placa MAPA
+  const ir=G();
+  add(ir, Cy(0.035,0.04,2.2,M(0x2a2a32),0,1.1,0));
+  add(ir, Pl(1.0,0.36,MB({map:ctex(256,80,(g,w,h)=>{g.fillStyle="#10241e";g.fillRect(0,0,w,h);
+    g.fillStyle="#5ad0c5";g.font="700 38px monospace";g.textAlign="center";g.fillText("⟵ MAPA",w/2,52);}),side:THREE.DoubleSide}),0,2.1,0));
+  at(ir,-4.5,0,3.0,0.4); sc.add(hot(ir,"Ir para…"));
+  return {scene:sc,cam:[0.5,1.65,5.2],look:[-0.5,1.5,-9]};
+};
+
+/* ---------- PLATAFORMA 12 (amanhecer) ---------- */
+BUILD3D.plat=function(){
+  const sc=new THREE.Scene();
+  sc.background=skyTex([[0,"#1c2a4a"],[0.5,"#7a4a6a"],[0.82,"#e8884a"],[1,"#ffc46a"]]);
+  sc.fog=new THREE.Fog(0x9a5a52,14,60);
+  sc.add(new THREE.AmbientLight(0x8a6a7a,0.7));
+  const sun=new THREE.DirectionalLight(0xffc998,0.9); sun.position.set(12,4,-18); sc.add(sun);
+  // sol
+  sc.add(Sp(1.6,MB({color:0xffe9b8}),16,3.4,-34));
+  sc.add(Sp(4.5,MB({color:0xffc46a,transparent:true,opacity:0.25,blending:THREE.AdditiveBlending}),16,3.4,-34.2));
+  // plataforma + via
+  sc.add(Pl(40,14,M(0x33303c,{map:plasterTex("#3a3744")}),0,0,1,-Math.PI/2));
+  sc.add(B(40,0.3,0.5,M(0xd8c46a),0,0.06,-5.6));
+  sc.add(Pl(40,10,M(0x16141c,{map:asphaltTex()}),0,-0.5,-11,-Math.PI/2));
+  // cobertura
+  for(let i=0;i<5;i++) sc.add(Cy(0.14,0.16,4.4,M(0x241e30),-12+i*6,2.2,2.5));
+  sc.add(B(32,0.24,5,M(0x2a2436),0,4.4,1.5));
+  // ônibus
+  const bus=G();
+  add(bus, B(9.4,2.5,2.5,M(0x2a5a7a,{roughness:0.4}),0,1.7,0));
+  add(bus, B(9.4,0.7,2.52,M(0x377099,{roughness:0.4}),0,2.7,0));
+  add(bus, Pl(8.6,0.95,MB({map:winTex("","#cfe0ff")}),0,2.35,1.27));
+  add(bus, B(8.8,0.2,2.54,MB({color:0xffd34d}),0,1.35,0));
+  add(bus, Pl(2.2,0.4,MB({map:ledTex([{t:"LITORAL NORTE 07h",c:"#ffd34d"}])}),-3.2,2.95,1.28));
+  [[-3.4],[3.0]].forEach(p=>{ const w1=Cy(0.52,0.52,0.4,M(0x0c0e14),p[0],0.52,1.2); w1.rotation.x=Math.PI/2; add(bus,w1);
+    add(bus, Cy(0.2,0.2,0.42,M(0x3a4050),p[0],0.52,1.2).rotateX(Math.PI/2)); });
+  add(bus, Pl(10,3,MB({color:0x000,transparent:true,opacity:0.3}),0,0.02,0,-Math.PI/2));
+  at(bus,2.5,-0.45,-9.2,0.06); sc.add(bus);
+  ANIM.push(t=>{bus.position.y=-0.45+Math.sin(t*7)*0.008;});
+  // placa PLATAFORMA 12
+  const pz=G();
+  add(pz, Cy(0.06,0.07,3.4,M(0x4a4656),0,1.7,0));
+  add(pz, B(1.7,1.0,0.1,M(0x163a2c),0,3.0,0));
+  add(pz, Pl(1.56,0.86,MB({map:ctex(256,144,(g,w,h)=>{g.fillStyle="#0c2018";g.fillRect(0,0,w,h);
+    g.fillStyle="#aef2cc";g.font="700 26px monospace";g.textAlign="center";g.fillText("PLATAFORMA",w/2,46);
+    g.fillStyle="#3ddc84";g.shadowColor="#3ddc84";g.shadowBlur=14;g.font="italic 800 64px Georgia";g.fillText("12",w/2,118);})}),0,3.0,0.06));
+  add(pz, pt(0x3ddc84,0.7,4,0,3.0,0.7));
+  at(pz,-4.5,0,-3.4); sc.add(pz);
+  // Gabriel com a guitarra + Marina
+  const gb=dude({shirt:0x37415f,pants:0x28304a,skin:0xcaa183,hair:0x26262e});
+  const gt=guitarMesh(); gt.scale.set(0.85,0.85,0.85); gt.rotation.z=Math.PI/2.4; gt.rotation.y=0.4;
+  at(gt,-0.42,0.6,-0.18); add(gb,gt);
+  at(gb,-1.6,0,-2.0,0.5); sc.add(gb);
+  const mr=dude({shirt:0x4a6ea8,pants:0x2c3240,skin:0xd9ab8b,hair:0x3a2620,longHair:true});
+  at(mr,-0.2,0,-2.6,-0.6); sc.add(mr);
+  const mala=B(0.45,0.6,0.22,M(0x5a3326),0.45,0.3,-2.5); sc.add(mala);
+  sc.add(Cy(0.012,0.012,0.24,M(0x33231a),0.45,0.72,-2.5));
+  ANIM.push(t=>{ gb.position.y=Math.sin(t*1.4)*0.012; mr.position.y=Math.sin(t*1.4+1)*0.012; });
+  // pássaros
+  for(let i=0;i<4;i++){ const b=Pl(0.3,0.08,MB({color:0x241c30,side:THREE.DoubleSide}),-6+i*2.4,4.6+Math.sin(i)*0.5,-16);
+    sc.add(b); ANIM.push(t=>{b.position.x+=0.012; if(b.position.x>14)b.position.x=-16; b.rotation.z=Math.sin(t*8+i)*0.3;}); }
+  return {scene:sc,cam:[1.2,1.65,3.8],look:[-1.2,1.5,-4.5]};
+};
+
+SCENES.plat={time:"DOM · 06H52",hots:()=>[]};
+
+/* ============================================================
+   CENA 1 — APARTAMENTO (lógica/hotspots)
+   ============================================================ */
+SCENES.apt={
+  time:"SÁB · 09H47",
+  enter(){ if(!S.f.intro){ S.f.intro=true;
+    dialog([
+      {w:"narrador",t:"Sábado, 9h47. A cabeça de Gabriel Loreto lateja no ritmo de uma música que ele não lembra de ter tocado."},
+      {w:"gabriel",t:"Última lembrança: o palco do Subsolo, meia-noite. Depois… <em>nada</em>. Dez horas de nada."},
+      {w:"gabriel",t:"Ok. Respira. Olha em volta. Tudo aqui dentro conta uma história — eu só preciso <em>ler</em> o apartamento."},
+    ],()=>say("Examine o quarto. Cada detalhe é uma pista — e algumas só aparecem <em>a fundo</em>."));
+  }},
+  hots(){
+    const H=[];
+    H.push({x:25,y:55,w:25,h:22,l:"Cama desfeita",fn:()=>{
+      say("Dormi <em>vestido</em>. De jaqueta e sapatos. O travesseiro tem uma marca de… curativo?");
+    }});
+    H.push({x:41,y:84,w:13,h:12,l:"Sapatos",done:hasClue("barro"),fn:()=>{
+      say("Barro <em>vermelho</em> na sola. Não chove há dias perto do bar… esse barro veio de outro canto da cidade.");
+      addClue("barro");
+    }});
+    H.push({x:28,y:80,w:12,h:10,l:"Calça de ontem",done:hasItem("recibo"),fn:()=>{
+      if(!hasItem("recibo")){ say("No bolso da calça: um <em>recibo de táxi</em> amassado. R$ 38,40 — 06h12. A origem está borrada.");
+        addItem("recibo"); addClue("recibo"); }
+      else say("A calça já me contou o que sabia.");
+    }});
+    H.push({x:59,y:50,w:11,h:18,l:"Jaqueta na cadeira",fn:()=>examJaqueta()});
+    H.push({x:52.2,y:60.5,w:6,h:6.5,l:"Celular (2%)",fn:()=>hotCelular()});
+    H.push({x:87,y:64,w:9,h:14,l:"Espelho",done:hasClue("curativo")&&hasClue("sangue"),fn:()=>{
+      dialog([
+        {w:"gabriel",t:"Um corte acima da sobrancelha esquerda. Fechado com um <em>curativo borboleta</em> — perfeito, simétrico. Eu não sei fazer isso nem sóbrio."},
+        {w:"gabriel",t:"E no punho da camisa… uma <em>mancha de sangue</em>. Pequena. Seca. Minha…? De outra pessoa…?"}
+      ],()=>{addClue("curativo");addClue("sangue");});
+    }});
+    H.push({x:92,y:78,w:6.5,h:10,l:"Chaves na porta",done:hasClue("chaves"),fn:()=>{
+      say("As chaves estão penduradas <em>por dentro</em>. Se eu tranquei… quem trancou? Alguém me ajudou a entrar?");
+      addClue("chaves");
+    }});
+    H.push({x:71,y:12,w:13,h:22,l:"Suporte vazio na parede",done:hasClue("suporte"),fn:()=>{
+      dialog([
+        {w:"gabriel",t:"…"},
+        {w:"gabriel",t:"A parede. O suporte. <em>A Giannini 1978 do meu pai não está aqui.</em>"},
+        {w:"gabriel",t:"Só sobrou a silhueta de poeira no formato dela. Meu estômago acabou de descer três andares."}
+      ],()=>addClue("suporte"));
+    }});
+    H.push({x:85,y:33,w:7,h:8,l:"Caixa de cartas antigas",done:S.f.cartaAntiga,fn:()=>{
+      if(!S.f.cartaAntiga) showCartaAntiga(false); else say("A caixa de correspondências. Dez anos de coisas não ditas.");
+    }});
+    H.push({x:13.5,y:47,w:9.5,h:30,l:"Geladeira",done:S.f.sawFridge,fn:()=>{
+      say("Na porta da geladeira, uma foto do <em>primeiro show da Vértice</em>. No bumbo, o logo da banda: um \u201CV\u201D atravessado — começa em cima à esquerda, desce até o meio, sobe para a direita.");
+      S.f.sawFridge=true; refresh();
+    }});
+    H.push({x:0.5,y:58,w:8.5,h:9,l:"Gaveta da cozinha",done:hasItem("carregpilha")&&hasItem("elastico")||S.f.chargerMade&&hasItem("elastico"),fn:()=>{
+      let got=[];
+      if(!hasItem("carregpilha")&&!S.f.chargerMade){addItem("carregpilha");got.push("um <em>carregador de pilhas</em> com porta USB");}
+      if(!hasItem("elastico")){addItem("elastico");got.push("um <em>elástico de dinheiro</em>");}
+      say(got.length?`A gaveta-de-tudo. Encontrei ${got.join(" e ")}. O resto: três pilhas mortas e um manual de micro-ondas que não tenho mais.`:"A gaveta-de-tudo, agora gaveta-de-quase-nada.");
+      refresh();
+    }});
+    H.push({x:62,y:81,w:8,h:8,l:"Controle de videogame",done:hasItem("cabo")||S.f.chargerMade,fn:()=>{
+      if(!hasItem("cabo")&&!S.f.chargerMade){ addItem("cabo");
+        say("O controle dorme no sofá com o <em>cabo USB</em> comprido. \u201CTudo nessa casa carrega no mesmo cabo, menos o que importa.\u201D"); refresh();}
+      else say("O controle, agora sem cabo, me julga em silêncio.");
+    }});
+    H.push({x:92.5,y:64,w:7,h:35,l:"Porta — sair",fn:()=>{
+      if(!S.f.barOpen){
+        if(!S.f.audioFixed){ say("Sair para onde? Sem carteira, sem memória… Preciso de um <em>fio</em> para puxar. O celular é o começo."); return;}
+      }
+      openMap();
+    }});
+    return H;
+  }
+};
+
+/* --- jaqueta (atualiza com novo conhecimento) --- */
+function examJaqueta(){
+  if(S.f.cidaPediu && !S.f.achouProtocolo){
+    dialog([
+      {w:"gabriel",t:"Espera. A Dona Cida falou em <em>protocolo</em>… Deixa eu revirar essa jaqueta DE NOVO. Bolso interno…"},
+      {w:"gabriel",t:"Um <em>curativo reserva</em>, igualzinho ao da minha cara. E no verso da embalagem… um número carimbado!"}
+    ],()=>{ S.f.achouProtocolo=true; addItem("curativo"); addClue("protocolo"); refresh(); });
+    return;
+  }
+  if(!hasItem("papel")){
+    dialog([
+      {w:"gabriel",t:"A jaqueta cheira a <em>fritura</em> e fumaça. Em algum momento da noite eu orbitei um tacho de óleo."},
+      {w:"gabriel",t:"No bolso… um <em>papel amassado</em>."},
+      {w:"narrador",t:"\u201CMARINA — 7-41-25 / GVRC\u201D. A caligrafia, firme e redonda, não é de Gabriel."},
+      {w:"gabriel",t:"Marina…? <em>Marina?!</em> Não. Não pode ser <em>aquela</em> Marina."}
+    ],()=>{ addItem("papel"); addClue("papel"); addClue("fritura"); refresh(); });
+  } else {
+    say("Cheiro de fritura, bolsos já revistados. "+(S.f.achouProtocolo?"Nada mais aqui.":"Acho que essa jaqueta ainda guarda segredos para quem souber <em>o que</em> procurar."));
+  }
+}
+function deepPapel(){
+  modal("Papel amassado — examinar a fundo",`
+   <div class="paper note">MARINA — 7-41-25<br>GVRC</div>
+   <p class="mt">Virando o papel… <b>no verso</b>, impresso e desbotado:</p>
+   <div class="ticket mt">RODOVIÁRIA CENTRAL · COMPROVANTE<br><span class="hr"></span>GUARDA-VOLUMES — VIA DO CLIENTE</div>
+   <p class="dimtxt mt">É o verso de um comprovante do guarda-volumes da Rodoviária Central.</p>
+   <div class="row mt"><button class="btn" onclick="closeModal()">Guardar com carinho</button></div>`);
+  addClue("gvrc");
+}
+function showCartaAntiga(fromInv){
+  modal("Uma carta de dez anos atrás",`
+   <div class="paper">
+     <p><i>Gabriel,</i></p>
+     <p>A banda acabou e tudo bem — bandas acabam. O que eu não aceito acabar desse jeito somos nós dois.
+     Vou embora terça. Se você aparecer na rodoviária, a gente conversa. Se você responder esta carta, a gente escreve.
+     Se você não fizer nem um nem outro…</p>
+     <p>…eu vou entender. Mas vou achar uma pena enorme. Você toca melhor quando eu estou olhando, sabia?</p>
+     <p class="sig">— M.</p>
+   </div>
+   <p class="dimtxt mt">Ele não respondeu. Não apareceu. A carta dormiu dez anos numa caixa de papelão.</p>
+   <div class="row mt"><button class="btn" onclick="closeModal()">${fromInv?"Fechar":"Guardar a carta (e a culpa)"}</button></div>`);
+  if(!S.f.cartaAntiga){ S.f.cartaAntiga=true; addItem("cartaAntiga"); addClue("cartaAntiga"); refresh(); }
+}
+
+/* --- celular: fluxo --- */
+function hotCelular(){
+  if(!hasItem("celular")){
+    addItem("celular");
+    say("O celular: tela <em>trincada</em>, 2% de bateria, apagando. E o carregador padrão… ficou no ensaio. Claro.");
+    return;
+  }
+  if(!S.f.phoneCharged){
+    if(S.f.chargerMade){ S.f.phoneCharged=true; sfx.ok();
+      dialog([
+        {w:"gabriel",t:"Cabo do controle + carregador de pilhas = <em>gambiarra premiada</em>. Carregando!"},
+        {w:"gabriel",t:"Agora… o desbloqueio. Que eu aparentemente <em>troquei</em> de madrugada. Bêbado. Por quê, Gabriel do passado, POR QUÊ?"}
+      ],()=>puzzlePattern());
+    } else {
+      say("2% de bateria. Preciso improvisar um carregador: algo com <em>USB</em>… Combine itens no inventário.");
+    }
+    return;
+  }
+  if(!S.f.phoneUnlocked){ puzzlePattern(); return; }
+  openPhone();
+}
+
+/* --- PUZZLE 2: padrão --- */
+let patSeq=[];
+function puzzlePattern(){
+  patSeq=[];
+  const smudges={0:"smudge1",7:"smudge2",2:"smudge3"};
+  let nodes="";
+  for(let r=0;r<3;r++)for(let c=0;c<3;c++){
+    const i=r*3+c;
+    nodes+=`<circle class="patnode ${smudges[i]||""}" data-i="${i}" cx="${70+c*80}" cy="${60+r*80}" r="17"/>`;
+  }
+  modal("\u201CPadrão\u201D — desbloquear o celular",`
+   <p class="dimtxt mb">Na tela trincada, <b>três marcas de dedo engorduradas</b> (obrigado, pastel) — com intensidades diferentes.
+   A mais forte foi o <b>começo</b> do traçado; a mais apagada, o <b>fim</b>. Mas que desenho é esse?</p>
+   <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+     <svg id="patgrid" viewBox="0 0 300 260" style="width:280px;background:#0a0d14;border:1px solid var(--line);border-radius:14px">
+       <polyline id="patline" fill="none" stroke="#ffb454" stroke-width="5" stroke-linecap="round" points=""/>
+       ${nodes}
+     </svg>
+     <div style="flex:1;min-width:220px">
+       <p style="font-size:13.5px;line-height:1.6">Legenda das marcas:<br>
+       <span style="color:#caa15a">● forte</span> → <span style="color:#9a7c4a">● média</span> → <span style="color:#6e5c40">● fraca</span></p>
+       <div class="row mt"><button class="btn ghost" id="patReset">↺ Recomeçar</button>
+       <button class="btn ghost" id="patHint">💭 Pensar alto</button></div>
+       <div class="hintline" id="patHintBox"></div>
+     </div>
+   </div>`);
+  const hints=S.f.sawFridge?
+    ["Três pontos… formando o quê? Algo que eu desenharia até dormindo.",
+     "O logo da Vértice. O \u201CV\u201D atravessado da foto na geladeira: <b>cima-esquerda → baixo-centro → cima-direita</b>."]:
+    ["Três pontos. Um desenho que eu faria no automático, até bêbado…",
+     "Tem alguma coisa na <b>geladeira</b> que eu desenho desde sempre. Talvez valha olhar lá primeiro."];
+  let hi=0;
+  $("#patHint").onclick=()=>{ $("#patHintBox").classList.add("on"); $("#patHintBox").innerHTML=hints[Math.min(hi++,hints.length-1)]; };
+  $("#patReset").onclick=()=>{ patSeq=[]; drawPat(); };
+  function drawPat(){
+    $$(".patnode").forEach(n=>n.classList.toggle("lit",patSeq.includes(+n.dataset.i)));
+    const pts=patSeq.map(i=>{const c=i%3,r=(i/3|0);return `${70+c*80},${60+r*80}`}).join(" ");
+    $("#patline").setAttribute("points",pts);
+  }
+  $$(".patnode").forEach(n=>n.onclick=()=>{
+    const i=+n.dataset.i;
+    if(patSeq.includes(i))return;
+    patSeq.push(i); tone(300+i*40,0.08,"triangle",0.07); drawPat();
+    if(patSeq.length===3){
+      if(patSeq.join(",")==="0,7,2"){
+        S.f.phoneUnlocked=true; sfx.ok(); closeModal();
+        dialog([
+          {w:"gabriel",t:"O \u201CV\u201D da Vértice. <em>Claro.</em> Mesmo sem memória, eu continuo sendo eu."},
+          {w:"gabriel",t:"Desbloqueado. Fotos, mensagens… e um <em>áudio de número desconhecido</em>, corrompido pela queda. Vamos lá."}
+        ],()=>openPhone());
+      } else {
+        sfx.bad(); say("\u201CPadrão incorreto.\u201D Até o celular está decepcionado comigo.");
+        setTimeout(()=>{patSeq=[];drawPat();},500);
+      }
+    }
+  });
+}
+
+/* --- celular: hub de apps --- */
+function openPhone(){
+  if(!S.f.phoneUnlocked){ say("O celular continua trancado."); return; }
+  const apps=[
+    {ic:"💬",n:"Mensagens",fn:phoneMsgs},
+    {ic:"🎞️",n:"Story marcado",fn:phoneStory},
+    {ic:"🎙️",n:S.f.audioFixed?"Áudio de Marina (restaurado)":"Áudio corrompido",fn:()=>S.f.audioFixed?playMarinaAudio():puzzleAudio()},
+    {ic:"📞",n:"Ligar para Léo",fn:phoneLeo},
+  ];
+  modal("Celular de Gabriel",`
+   <div style="max-width:380px;margin:0 auto;background:#0a0d14;border:1px solid var(--line);border-radius:22px;padding:18px">
+     <div style="text-align:center;font-family:var(--mono);font-size:12px;color:var(--dim)">▮▮▮ carregando · ${S.f.audioFixed?"sáb 10h31":"sáb 10h12"} · tela trincada</div>
+     <div class="grid mt" style="grid-template-columns:repeat(2,1fr)">
+      ${apps.map((a,i)=>`<div class="itm" data-app="${i}"><div class="ic">${a.ic}</div><div class="nm">${a.n}</div></div>`).join("")}
+     </div>
+   </div>`,"2% → 64%");
+  $$("#mbody [data-app]").forEach(d=>d.onclick=()=>{sfx.click();apps[+d.dataset.app].fn();});
+}
+function phoneMsgs(){
+  modal("Mensagens",`
+   <div style="max-width:430px;margin:0 auto">
+    <p style="font-family:var(--mono);font-size:12px;color:var(--neon)">LÉO · 03h12–03h40</p>
+    <div class="frag"><div class="fx">🎙️ \u201CGabriel. GABRIEL. Cadê você, criatura?\u201D</div></div>
+    <div class="frag"><div class="fx">🎙️ \u201CVocê vai se <b>arrepender</b> disso, tô avisando.\u201D</div></div>
+    <div class="frag"><div class="fx">🎙️ \u201CSegunda-feira a gente conversa. SE você estiver vivo. E É BOM ESTAR.\u201D</div></div>
+    <p style="font-family:var(--mono);font-size:12px;color:var(--bad)" class="mt">NÚMERO DESCONHECIDO · 02h31</p>
+    <div class="frag" style="border-color:var(--bad)"><div class="fx">\u201Cfica longe dela.\u201D</div></div>
+    <div class="row mt"><button class="btn ghost" id="backPh">← Voltar</button></div>
+   </div>`);
+  addClue("leo"); addClue("ameaca");
+  $("#backPh").onclick=openPhone;
+}
+function phoneStory(){
+  S.f.storyVisto=true; addClue("story4");
+  modal("Story marcado — @fa_da_vertice",`
+   <div style="max-width:340px;margin:0 auto;background:#000;border-radius:14px;padding:10px;border:1px solid var(--line)">
+     <svg viewBox="0 0 300 380" style="width:100%;border-radius:8px">
+       <rect width="300" height="380" fill="#120a14"/>
+       <rect x="0" y="250" width="300" height="130" fill="#1a0f1e"/>
+       <circle cx="150" cy="60" r="40" fill="#ff4d7d" opacity=".25"/>
+       <rect x="60" y="120" width="180" height="8" fill="#ff4d7d" opacity=".5"/>
+       <g fill="#0a0610"><ellipse cx="80" cy="330" rx="22" ry="46"/><ellipse cx="150" cy="320" rx="24" ry="52"/><ellipse cx="222" cy="332" rx="22" ry="44"/></g>
+       <g stroke="#ffd9a0" stroke-width="3"><line x1="150" y1="170" x2="150" y2="230"/><line x1="120" y1="190" x2="180" y2="190"/></g>
+       <text x="150" y="290" text-anchor="middle" fill="#ffd9a0" font-size="17" font-family="monospace">CIDADE FANTASMA 🔥</text>
+       <text x="150" y="312" text-anchor="middle" fill="#caa3ff" font-size="13" font-family="monospace">a 4ª do set &gt;&gt;&gt;</text>
+     </svg>
+   </div>
+   <p class="dimtxt mt" style="text-align:center">Anotado: \u201CCidade Fantasma\u201D foi a <b>4ª música</b> do show.</p>
+   <div class="row mt" style="justify-content:center"><button class="btn ghost" id="backPh">← Voltar</button></div>`);
+  $("#backPh").onclick=openPhone;
+}
+function phoneLeo(){
+  if(S.f.leoLigado){ say("O Léo já desligou na minha cara uma vez hoje. Com carinho, mas desligou."); return; }
+  S.f.leoLigado=true; closeModal();
+  dialog([
+    {w:"leo",t:"ATÉ QUE ENFIM. Você tá vivo? Tá inteiro? Tá com o…?"},
+    {w:"gabriel",t:"Léo, calma, eu— por que eu vou \u201Cme arrepender\u201D? O que eu fiz com você ontem?!"},
+    {w:"leo",t:"Comigo? NADA. Você sumiu com o <em>cabo da mesa de som</em>, anta. Domingo tem ensaio! Você vai se arrepender se não devolver!"},
+    {w:"gabriel",t:"…O cabo. Da mesa. <em>É só isso?</em>"},
+    {w:"leo",t:"\u201CSó\u201D?! Aquele cabo custou— ah, e Gabriel? A ruiva da terceira fileira ontem. Era quem eu tô pensando que era?"},
+    {w:"gabriel",t:"…Te ligo depois, Léo."},
+  ],()=>{ addClue("cabosom"); toast("☎️ Um red herring a menos: Léo só quer o cabo."); });
+}
+
+/* --- PUZZLE 3: áudio corrompido --- */
+const FRAGS=[
+  {id:0,tx:"\u201C…não devia ter deixado você dormir ali, mas você tava…\u201D",bg:"[fundo: vento + um banco rangendo]"},
+  {id:1,tx:"\u201C…(risada) …impossível. Igual há dez anos.\u201D",bg:"[fundo: passos em piso de pedra]"},
+  {id:2,tx:"\u201CGuarda bem o papel, tá? Sete… quarenta e um…\u201D",bg:"[fundo: \u2018ônibus com destino a—\u2019 anúncio começa]"},
+  {id:3,tx:"\u201C…(anúncio cobre a voz) …—taforma doze, embarque imediato.\u201D",bg:"[fundo: anúncio termina + sino de igreja, 1ª badalada]"},
+  {id:4,tx:"\u201CE desculpa por ontem. Ou obrigada. Os dois.\u201D",bg:"[fundo: sino, badaladas finais + motor de ônibus]"},
+];
+let fragOrder=[];
+function puzzleAudio(){
+  fragOrder=[3,1,4,0,2]; // embaralhado
+  modal("\u201CA mensagem cortada\u201D — restaurar o áudio",`
+   <p class="dimtxt mb">A queda corrompeu o áudio do número desconhecido: <b>5 fragmentos fora de ordem</b>.
+   Os <b>sons de fundo</b> são contínuos — vento, passos, um anúncio que <i>começa</i> num trecho e <i>termina</i> no outro, um sino que badala em sequência. Reordene com ▲▼ e teste.</p>
+   <div id="fraglist"></div>
+   <div class="row mt"><button class="btn warm" id="fragPlay">▶ Reproduzir nessa ordem</button>
+   <button class="btn ghost" id="fragHint">💭 Pensar alto</button></div>
+   <div class="hintline" id="fragHintBox"></div>`);
+  renderFrags();
+  let hi=0; const hints=[
+    "O <b>anúncio de plataforma</b> começa num fragmento e termina no seguinte. Isso cola dois pedaços.",
+    "O <b>sino</b>: primeira badalada num trecho, badaladas finais no outro. Outra cola.",
+    "Vento e banco rangendo… ela começa falando de <b>me deixar dormir</b>. Parece um começo, não?"
+  ];
+  $("#fragHint").onclick=()=>{$("#fragHintBox").classList.add("on");$("#fragHintBox").innerHTML=hints[Math.min(hi++,hints.length-1)];};
+  $("#fragPlay").onclick=()=>{
+    if(fragOrder.join(",")==="0,1,2,3,4"){ S.f.audioFixed=true; sfx.ok(); playMarinaAudio(); }
+    else { sfx.bad(); say("O anúncio termina <em>antes</em> de começar. Viagem no tempo, não. Mais uma tentativa."); }
+  };
+}
+function renderFrags(){
+  const l=$("#fraglist"); if(!l)return; l.innerHTML="";
+  fragOrder.forEach((fid,pos)=>{
+    const f=FRAGS[fid];
+    const d=document.createElement("div"); d.className="frag";
+    d.innerHTML=`<div style="font-family:var(--mono);color:var(--dim);font-size:12px">${pos+1}</div>
+      <div class="fx">${f.tx}<span class="bgs">${f.bg}</span></div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <button data-up="${pos}">▲</button><button data-dn="${pos}">▼</button></div>`;
+    l.appendChild(d);
+  });
+  $$("#fraglist [data-up]").forEach(b=>b.onclick=()=>{const p=+b.dataset.up;if(p>0){[fragOrder[p-1],fragOrder[p]]=[fragOrder[p],fragOrder[p-1]];sfx.click();renderFrags();}});
+  $$("#fraglist [data-dn]").forEach(b=>b.onclick=()=>{const p=+b.dataset.dn;if(p<4){[fragOrder[p+1],fragOrder[p]]=[fragOrder[p],fragOrder[p+1]];sfx.click();renderFrags();}});
+}
+function playMarinaAudio(){
+  modal("Áudio restaurado — 06h02, número desconhecido",`
+   <div class="paper" style="background:#1a1410;color:#ffd9a0;font-family:var(--sans)">
+     <p style="font-family:var(--mono);font-size:12px;color:#caa14b">▶ 00:23 ────────●── 00:31</p>
+     <p class="mt"><i>(voz de mulher, baixa, meio rindo)</i></p>
+     <p>\u201CNão devia ter deixado você dormir ali, mas você tava… (risada) …impossível. Igual há dez anos.
+     Guarda bem o papel, tá? Sete… quarenta e um… <i>(anúncio: \u2018—taforma doze, embarque imediato\u2019)</i>
+     …e desculpa por ontem. Ou obrigada. Os dois.\u201D</p>
+   </div>
+   <div class="row mt"><button class="btn" id="audOk">…Marina.</button></div>`);
+  $("#audOk").onclick=()=>{ closeModal();
+    if(!S.lamps.neon){
+      dialog([
+        {w:"gabriel",t:"Essa voz. Essa <em>risada</em>. Dez anos não apagam uma risada dessas."},
+        {w:"narrador",t:"Um clarão: luz de neon cor-de-rosa na rua molhada, e uma risada que atravessa uma década."},
+      ],()=>{ unlockLamp("neon");
+        setTimeout(()=>dialog([
+          {w:"gabriel",t:"O nome do bilhete tem rosto agora. E os números têm contexto: <em>sete, quarenta e um, vinte e cinco</em>…"},
+          {w:"gabriel",t:"Primeiro, o prático: minha <em>carteira sumiu</em>. Sem ela eu não pego nem ônibus. Última vez que a vi? No <em>Subsolo</em>. É lá que eu começo."}
+        ],()=>{ S.f.barOpen=true; $("#bMap").style.display="flex"; toast("🗺️ Novo local: <b>Bar Subsolo</b>"); say("O botão <em>Sair / Ir para…</em> abre o mapa."); }),2900);
+      });
+    }
+  };
+}
+
+/* ============================================================
+   CENA 2 — BAR SUBSOLO
+   ============================================================ */
+SCENES.bar={
+  time:"SÁB · 12H10",
+  enter(){
+    if(!S.f._barIntro){ S.f._barIntro=true;
+      dialog([
+        {w:"narrador",t:"Meio-dia. O Subsolo de dia parece um palco sem peça: cadeiras viradas, cheiro de cerveja velha e desinfetante."},
+        {w:"tonho",t:"Olha quem voltou andando com as próprias pernas. Tá procurando <em>isto</em> aqui?"},
+        {w:"narrador",t:"Tonho ergue a carteira de Gabriel — aberta, vazia e <em>presa na comanda</em>."},
+        {w:"tonho",t:"Você deixou aberta na conta e <em>esqueceu</em>. E a conta, meu querido… tá um poema. Paga, que eu devolvo."},
+        {w:"gabriel",t:"Tonho, eu tô sem um centavo e meu cartão <em>bloqueou</em> — alguém errou a senha três vezes de madrugada. Adivinha quem."},
+        {w:"tonho",t:"Hahá! Clássico. Então me <em>prova</em> que metade dessa comanda não é sua, porque tem rodada aqui que eu duvido. O cupom da impressora rasgou e caiu no <em>lixo</em>. Se vira."},
+      ],()=>say("O cupom da comanda está na <em>lixeira</em>, em pedaços."));
+    }
+  },
+  hots(){
+    const H=[];
+    H.push({x:62,y:38,w:14,h:38,l:"Tonho",fn:talkTonho});
+    H.push({x:88,y:74,w:8,h:18,l:"Lixeira",done:S.f.contaPaga,fn:()=>{
+      if(S.f.contaPaga){ say("Já revirei lixo o suficiente para uma vida."); return;}
+      puzzleCupom();
+    }});
+    H.push({x:4,y:26,w:30,h:46,l:"Palco e setlist",done:S.f.setlist,fn:()=>{
+      if(!S.f.contaPaga){ say("O Tonho me olha como segurança de shopping. Melhor resolver a <em>conta</em> antes de fuçar no palco."); return;}
+      if(S.f.setlist){ say("O palco vazio. Ontem ele estava cheio de futuro."); return;}
+      puzzleSetlist();
+    }});
+    H.push({x:42,y:46,w:12,h:36,l:"Jukebox",fn:()=>{
+      if(!S.f.contaPaga){ say("A jukebox pisca. O Tonho pisca de volta: <em>\u201Cprimeiro a conta\u201D</em>."); return;}
+      if(S.f.setlist){ say("A jukebox descansa. Fez seu trabalho de máquina do tempo."); return;}
+      puzzleSetlist();
+    }});
+    if(S.f.setlist&&!S.f.chaveiro) H.push({x:61,y:54,w:5,h:8,l:"Chaveiro esquecido",fn:()=>{
+      S.f.chaveiro=true; addItem("chaveiro");
+      dialog([
+        {w:"tonho",t:"Ih, é. Esse chaveiro laranja apareceu no balcão de madrugada. A moça da jaqueta jeans esqueceu? Ou era seu?"},
+        {w:"gabriel",t:"Ficha número <em>7</em>… \u201CR. CENTRAL\u201D… Tonho, eu acho que eu peguei o chaveiro <em>dela</em> por engano durante a noite. E larguei aqui."},
+        {w:"tonho",t:"Vocês dois trocando chaveiro sem perceber. Dez anos se passam e ninguém aprende nada."},
+      ],()=>refresh());
+    }});
+    H.push({x:0,y:88,w:12,h:11,l:"Sair do bar",fn:openMap});
+    return H;
+  }
+};
+function talkTonho(){
+  if(!S.f.contaPaga){ say("Tonho aponta a lixeira com o queixo, sem parar de secar copo. A mensagem é clara."); return; }
+  const left=S.f.fichas;
+  if(left<=0){ 
+    if(S.f.fichaExtra && !S.f._extraUsada){ /* pergunta extra ganha na setlist */ }
+    say("Tonho: \u201CTrabalho, meu filho. Sábado o Subsolo abre às seis.\u201D"); return;
+  }
+  const Q=[];
+  if(!S.f.perguntou.jeans) Q.push({t:"🧥 Quem era a mulher de jaqueta jeans?",fn:()=>{S.f.perguntou.jeans=true;S.f.fichas--;
+    dialog([
+      {w:"tonho",t:"Ruiva, jaqueta jeans, riu alto a noite toda. Vocês ficaram no balcão depois do show, <em>colados</em>, tipo duas horas."},
+      {w:"tonho",t:"E eu vou te falar: vocês pareciam se conhecer <em>de outra vida</em>. Ela imitava você tocando. Você deixava."},
+    ],()=>{ addClue("jeans"); unlockLamp("balcao"); endTonhoQ(); });}});
+  if(!S.f.perguntou.bone) Q.push({t:"🧢 Tinha alguém estranho no bar?",fn:()=>{S.f.perguntou.bone=true;S.f.fichas--;
+    dialog([
+      {w:"tonho",t:"Tinha um de <em>boné</em>, encostado no fundo, que não bebeu quase nada e não tirou o olho de vocês. Saiu <em>logo atrás</em> quando vocês foram embora."},
+      {w:"tonho",t:"Cara de quem masca raiva. Não fui com a fuça dele, não."},
+    ],()=>{ addClue("bone"); endTonhoQ(); });}});
+  if(!S.f.perguntou.guit) Q.push({t:"🎸 Eu saí daqui com a minha guitarra?",fn:()=>{S.f.perguntou.guit=true;S.f.fichas--;
+    dialog([
+      {w:"tonho",t:"Saiu, uai. <em>A tiracolo</em>, abraçado nela que nem coala. Falou \u201Cnão deixo a Giannini nem com você, Tonho\u201D. Sentido, eu fiquei."},
+      {w:"gabriel",t:"Então ela saiu comigo… e não voltou para casa comigo. Onde é que eu larguei a guitarra do meu <em>pai</em>?"},
+    ],()=>{ addClue("saiuguitarra"); unlockLamp("tiracolo"); endTonhoQ(); });}});
+  if(!S.f.perguntou.bebi) Q.push({t:"🍺 O que exatamente eu bebi?",fn:()=>{S.f.perguntou.bebi=true;S.f.fichas--;
+    dialog([
+      {w:"tonho",t:"Pouco, na real. O problema não foi <em>quanto</em>, foi <em>o quê</em>: você misturou cerveja com aquele licor que o Juca trouxe de viagem. Aquilo derruba memória de elefante."},
+      {w:"gabriel",t:"…Isso explica o apagão. Não explica minha vida, mas explica o apagão."},
+    ],()=>endTonhoQ());}});
+  dialog([
+    {w:"tonho",t:`Conta paga, língua solta. Mas trabalho me espera: te respondo <em>${left}</em> pergunta${left>1?"s":""}. Escolhe bem.`,
+     choices:Q.concat([{t:"↩ Deixa pra lá (por enquanto)",fn:()=>{}}])}
+  ]);
+}
+function endTonhoQ(){
+  if(S.f.fichas<=0 && !S.f.fichaExtra) say("Tonho volta aos copos: \u201CAcabaram as fichas, meu querido.\u201D");
+  else say(`Tonho seca um copo. ${S.f.fichas>0?`Ainda me deve ${S.f.fichas} resposta${S.f.fichas>1?"s":""}.`:""}`);
+}
+
+/* --- PUZZLE 4: cupom rasgado --- */
+const CUPOM=[
+  "SUBSOLO BAR · COMANDA Nº 14",
+  "22h08 · 2x long neck ............. 24,00",
+  "22h41 · 1x água c/ gás (banda) ..... 6,00",
+  "23h12 · 4x long neck (\u201Cpõe na conta do Gabriel\u201D — não autorizado)",
+  "23h55 · 2x caipirinha — MESA 9 (impresso na comanda errada)",
+  "00h22 · 2x refrigerante ........... 14,00",
+  "01h05 · 1x long neck + 1x suco .... 19,00",
+  "01h28 · pré-fechamento parcial",
+  "*** nenhum lançamento após 01h28 ***"
+];
+let cupOrder=[], cupSel=null;
+function puzzleCupom(){
+  cupOrder=[4,0,7,2,8,1,6,3,5];
+  modal("\u201CO cupom rasgado\u201D — remontar a comanda",`
+   <p class="dimtxt mb">Nove tiras de papel térmico, lambuzadas de limão. Clique numa tira e depois noutra para <b>trocá-las de lugar</b>.
+   A ordem certa é a ordem do tempo — e o tempo conta uma história.</p>
+   <div id="cupgrid"></div>
+   <div class="row mt"><button class="btn warm" id="cupCheck">📎 Mostrar ao Tonho</button>
+   <button class="btn ghost" id="cupHint">💭 Pensar alto</button></div>
+   <div class="hintline" id="cupHintBox"></div>`);
+  renderCupom();
+  let hi=0;const hints=["O cabeçalho vem primeiro; o aviso de \u201Cnenhum lançamento\u201D, por último.",
+    "Os horários impressos ordenam quase tudo: 22h08 → 01h28.",
+    "Duas tiras são <b>intrusas na história</b> mas fazem parte do papel: a rodada \u201Cnão autorizada\u201D e a da MESA 9. Elas ficam onde os horários mandam — e são minha prova."];
+  $("#cupHint").onclick=()=>{$("#cupHintBox").classList.add("on");$("#cupHintBox").innerHTML=hints[Math.min(hi++,hints.length-1)];};
+  $("#cupCheck").onclick=()=>{
+    if(cupOrder.join(",")==="0,1,2,3,4,5,6,7,8"){
+      S.f.contaPaga=true; sfx.ok(); closeModal();
+      dialog([
+        {w:"gabriel",t:"Tonho. Olha aqui: a rodada das 23h12 foi um engraçadinho pendurando no meu nome, e a caipirinha é da <em>mesa 9</em>."},
+        {w:"tonho",t:"…É. O da rodada foi o Juca, aposto meu pano de prato. Tá certo: abato a diferença, o resto a gente acerta no próximo cachê. Toma a carteira."},
+        {w:"gabriel",t:"E olha isso: <em>nenhum pedido depois de 01h28</em>. Eu saí daqui mais ou menos à 01h30. Primeiro marco firme da noite."},
+      ],()=>{ addItem("carteira"); addClue("comanda"); say("Tonho está de língua solta agora. E o <em>palco</em> ficou liberado."); refresh(); });
+    } else { sfx.bad(); say("Tonho espia por cima do ombro: \u201CTá de cabeça pra baixo isso aí, maestro.\u201D"); }
+  };
+}
+function renderCupom(){
+  const g=$("#cupgrid"); if(!g)return; g.innerHTML="";
+  cupOrder.forEach((cid,pos)=>{
+    const d=document.createElement("div");
+    d.className="cup"+(cupSel===pos?" sel":"")+((cid===pos)?" lock":"");
+    d.textContent=CUPOM[cid];
+    d.onclick=()=>{
+      if(cupSel===null){cupSel=pos;}
+      else if(cupSel===pos){cupSel=null;}
+      else {[cupOrder[cupSel],cupOrder[pos]]=[cupOrder[pos],cupOrder[cupSel]];cupSel=null;sfx.click();}
+      renderCupom();
+    };
+    g.appendChild(d);
+  });
+}
+
+/* --- PUZZLE 5: setlist --- */
+const SONGS=["Vinil Riscado","Quina do Mundo","Vértice","Cidade Fantasma","Nove e Meia","Sinal Fechado","Depois da Meia-Noite","Outra Margem","Ruído Branco"];
+const SET_OK=[0,1,2,3,4,5,6];
+let setProg=[];
+function puzzleSetlist(){
+  setProg=[];
+  modal("\u201CSetlist\u201D — tocar o show de novo",`
+   <p class="dimtxt mb">A setlist de ontem está no chão do palco — com duas músicas <b>borradas de cerveja</b>.
+   A jukebox tem todas (e mais algumas). Toque as 7 <b>na ordem do show</b> para puxar a memória.</p>
+   <div class="row" style="align-items:flex-start;gap:22px">
+     <div class="ticket" style="width:230px;flex:0 0 230px">SETLIST · VÉRTICE<span class="hr"></span>
+       1. Vinil Riscado<br>2. Quina do Mundo<br>3. Vértice<br>4. <span style="background:#bfae84;color:#bfae84">███████</span><br>
+       5. Nove e Meia<br>6. Sinal Fechado<br>7. <span style="background:#bfae84;color:#bfae84">█████████</span>
+       <span class="hr"></span><span style="font-size:11px">obs: ${S.f.storyVisto?"story do fã: a 4ª foi CIDADE FANTASMA":"…tem um story marcado no meu celular sobre o show…"}</span><br>
+       <span style="font-size:11px">Tonho: \u201Ca única <b>balada</b> foi a última. Casa em silêncio total.\u201D</span>
+     </div>
+     <div style="flex:1;min-width:260px">
+       <div class="dimtxt mb">JUKEBOX — selecione na ordem · <span id="setN" class="notenote">0/7</span></div>
+       <div id="setlistBox" style="display:flex;flex-direction:column;gap:7px"></div>
+     </div>
+   </div>`);
+  renderSet();
+}
+function renderSet(){
+  const box=$("#setlistBox"); if(!box)return; box.innerHTML="";
+  const meta={6:"(a balada)",3:"",8:"(instrumental ruidosa)",7:"(reggae da banda de antes)"};
+  SONGS.forEach((s,i)=>{
+    const d=document.createElement("div"); d.className="song"+(setProg.includes(i)?" played":"");
+    d.innerHTML=`<span class="n">${setProg.includes(i)?"▮":"▸"}</span> ${s} <span class="dimtxt" style="font-size:11px">${meta[i]||""}</span>`;
+    d.onclick=()=>{
+      const pos=setProg.length;
+      tone(220+ i*36,0.3,"triangle",0.12); tone(330+i*36,0.3,"sine",0.07,0.06);
+      if(SET_OK[pos]===i){ setProg.push(i); $("#setN").textContent=setProg.length+"/7"; renderSet();
+        if(setProg.length===7) setlistDone();
+      } else {
+        sfx.bad(); setProg=[]; $("#setN").textContent="0/7"; renderSet();
+        say(["A jukebox engasga. Não foi assim. De novo, do começo — como todo bom ensaio.",
+             "Tonho, de longe: \u201CEssa aí não foi nessa hora não, maestro.\u201D",
+             "Errada. Mas errar a ordem do próprio show tem seu charme trágico."][Math.floor(Math.random()*3)]);
+      }
+    };
+    box.appendChild(d);
+  });
+}
+function setlistDone(){
+  S.f.setlist=true; sfx.ok(); closeModal();
+  dialog([
+    {w:"narrador",t:"A última música — a única balada — escorre da jukebox. O bar vazio fica, por um instante, cheio."},
+    {w:"narrador",t:"E a memória abre: a plateia em silêncio… e um rosto na <em>terceira fileira</em> que faz o Gabriel de ontem errar o acorde."},
+  ],()=>{
+    unlockLamp("show");
+    setTimeout(()=>{
+      const extra=!S.f.fichaExtra;
+      dialog([
+        {w:"tonho",t:"…Arrepiei o braço, olha. Você errou <em>exatamente</em> o mesmo acorde de ontem, na mesma música."+(extra?" Sabe de uma coisa? Pergunta <em>mais uma</em>. De graça. A história tá boa.":"")},
+      ],()=>{ if(extra){S.f.fichaExtra=true;S.f.fichas++;}
+        say("Tem um <em>chaveiro</em> brilhando no balcão que eu juro que não estava lá antes. Ou estava?"); refresh(); });
+    },2900);
+  });
+}
+
+/* ============================================================
+   CENA 3 — O QUARTEIRÃO (food truck / farmácia / táxi)
+   ============================================================ */
+SCENES.rua={
+  time:"SÁB · 17H30",
+  enter(){
+    if(!S.f._ruaIntro){ S.f._ruaIntro=true;
+      dialog([
+        {w:"narrador",t:"Fim de tarde. Gabriel segue o cheiro de fritura da própria jaqueta como um cão de caça de si mesmo."},
+        {w:"gabriel",t:"O food truck. A farmácia 24h. O ponto de táxi. Esse quarteirão sabe mais da minha noite do que eu."},
+      ]);
+    }
+  },
+  hots(){
+    const H=[];
+    H.push({x:5,y:36,w:29,h:36,l:"Food truck — Seu Edmilson",fn:talkEdmilson});
+    H.push({x:41,y:30,w:23,h:40,l:"Farmácia 24h — Dona Cida",fn:talkCida});
+    H.push({x:71,y:35,w:25,h:42,l:"Ponto de táxi",fn:hotTaxi});
+    H.push({x:0,y:88,w:12,h:11,l:"Ir para…",fn:openMap});
+    return H;
+  }
+};
+function talkEdmilson(){
+  if(!S.f.edmilson && !S.f.pastelLamp){
+    dialog([
+      {w:"edmilson",t:"RAPAZ! O rapaz da confusão! Tá vivo! E a testa, firmou? A moça que cuidou, né? Vi tudo. VI TUDO."},
+      {w:"gabriel",t:"…Confusão? Seu Edmilson, eu não lembro de <em>nada</em>. O senhor pode me contar o que viu?"},
+      {w:"narrador",t:"O cheiro do óleo quente sobe — e com ele, um flash: madrugada, rádio baixinho, alguém rindo de boca cheia."},
+    ],()=>{ S.f.pastelLamp=true; unlockLamp("pastel");
+      setTimeout(()=>dialog([
+        {w:"edmilson",t:"Contar eu conto. Mas já aviso: eu conto <em>bem contado</em>. Senta aí."},
+      ],()=>puzzleEdmilson()),2900);
+    });
+    return;
+  }
+  if(!S.f.edmilson){ puzzleEdmilson(); return; }
+  say("Seu Edmilson: \u201CVolta sempre! E traz a moça! Pastel de azeitona tá <em>chamando</em>!\u201D");
+}
+function puzzleEdmilson(){
+  const ST=[
+    {t:"\u201CO rapaz partiu pra cima e deu um SOCO no homem de boné!\u201D",ok:false,why:"O corte foi de queda (curativo), não de soco dado."},
+    {t:"\u201CO homem de boné EMPURROU o rapaz, isso sim.\u201D",ok:true},
+    {t:"\u201CO rapaz caiu e bateu a cara na quina do meio-fio. O telefone voou longe.\u201D",ok:true},
+    {t:"\u201CEram DOIS homens de boné. Talvez três. Uma gangue de boné!\u201D",ok:false,why:"Tonho viu UM homem de boné sair atrás de nós."},
+    {t:"\u201CA moça gritou \u2018para com isso!\u2019 e eu ameacei chamar a polícia. O boné sumiu na hora.\u201D",ok:true},
+    {t:"\u201CO rapaz quebrou o celular do homem no chão, de raiva.\u201D",ok:false,why:"O celular trincado é o MEU — caiu comigo."},
+  ];
+  let sel=new Set();
+  modal("\u201CO conto do pasteleiro\u201D — separar fato de invenção",`
+   <p class="dimtxt mb">Seu Edmilson narra a briga <b>três vezes, três jeitos</b>. Compare com as <b>evidências físicas</b>
+   e marque as <b>3 frases consistentes</b> com o que você sabe.</p>
+   <div class="row" style="align-items:flex-start;gap:20px">
+     <div style="flex:1;min-width:280px" id="edmList">
+       ${ST.map((s,i)=>`<button class="opt" data-i="${i}">${s.t}</button>`).join("")}
+     </div>
+     <div class="ticket" style="width:230px;flex:0 0 230px">EVIDÊNCIAS<span class="hr"></span>
+       ${hasClue("curativo")?"· corte na sobrancelha = QUEDA<br>":""}
+       ${hasClue("sangue")?"· sangue no MEU punho (limpei meu rosto)<br>":""}
+       · MEU celular trincado (impacto no chão)<br>
+       ${hasClue("bone")?"· Tonho: UM homem de boné saiu atrás<br>":""}
+       ${hasClue("ameaca")?"· msg: \u201Cfica longe dela\u201D<br>":""}
+     </div>
+   </div>
+   <div class="row mt"><button class="btn warm" id="edmCheck">⚖️ \u201CFoi assim, Seu Edmilson\u201D</button><span class="dimtxt" id="edmStat"></span></div>`);
+  $$("#edmList .opt").forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i; sfx.click();
+    if(sel.has(i)){sel.delete(i);b.classList.remove("checked");}
+    else if(sel.size<3){sel.add(i);b.classList.add("checked");}
+    else $("#edmStat").textContent="Só três frases podem ser verdade ao mesmo tempo.";
+  });
+  $("#edmCheck").onclick=()=>{
+    if(sel.size!==3){$("#edmStat").textContent="Marque exatamente 3 frases.";return;}
+    const ok=[...sel].every(i=>ST[i].ok);
+    if(ok){
+      S.f.edmilson=true; sfx.ok(); closeModal();
+      dialog([
+        {w:"edmilson",t:"…É. Contado assim, sem tempero, foi <em>isso</em>. O boné empurrou, você caiu, a moça gritou, eu gritei mais alto. Fim."},
+        {w:"gabriel",t:"Então eu <em>não bati em ninguém</em>. Eu entrei na frente dela. E levei a pior. E o sangue no punho… é meu."},
+        {w:"narrador",t:"O medo que rondava a manhã inteira se desfaz — e no lugar dele, a memória volta nítida: o boné, o empurrão, a voz dela."},
+      ],()=>{ addClue("briga"); unlockLamp("queda");
+        setTimeout(()=>dialog([
+          {w:"edmilson",t:"Ah, e o final: a moça saiu daqui com você <em>amparado no ombro</em>, rumo à <em>farmácia da Cida</em>. Cena de cinema. Eu chorei? Chorei. Tava cortando cebola? Tava. Mas chorei."},
+        ],()=>say("Próxima parada da noite reconstruída: a <em>farmácia</em>.")),2900);
+      });
+    } else {
+      sfx.bad();
+      const bad=[...sel].find(i=>!ST[i].ok);
+      say(`Hmm. \u201C${ST[bad].t}\u201D não fecha: ${ST[bad].why||"as evidências dizem outra coisa."}`);
+    }
+  };
+}
+function talkCida(){
+  if(S.f.farmaciaOk){ say("Dona Cida acena da janela: \u201CJuízo! E troca esse curativo amanhã!\u201D"); return; }
+  if(!S.f.cidaPediu){
+    S.f.cidaPediu=true;
+    dialog([
+      {w:"cida",t:"Eu lembro de vocês, meu filho! Madrugada, você sangrando e <em>fazendo piada</em>, ela séria que nem cirurgiã. Casal de novela."},
+      {w:"gabriel",t:"A senhora lembra o <em>horário</em>? Eu preciso reconstruir essa noite, Dona Cida. É… importante."},
+      {w:"cida",t:"De cabeça não, meu anjo. Mas o sistema acha o cupom pelo <em>número de protocolo</em>. Vem carimbado nos produtos — ela levou até <em>curativo reserva</em>, lembro bem, enfiou no seu bolso e tudo."},
+      {w:"gabriel",t:"Curativo reserva… no <em>bolso</em>… Eu já revirei a jaqueta, mas… revirei <em>tudo</em> dela? Os bolsos internos?"},
+    ],()=>say("Novo conhecimento, velho cenário: a <em>jaqueta</em> merece um segundo exame. Ela está pendurada no meu apartamento."));
+    return;
+  }
+  if(!S.f.achouProtocolo){
+    say("Dona Cida espera o protocolo. A jaqueta — e seus bolsos internos — está no <em>apartamento</em>.");
+    return;
+  }
+  // tem protocolo
+  modal("FARMA 24H — busca por protocolo",`
+   <p class="dimtxt mb">Dona Cida vira o monitor: \u201CDigita aí, meu filho. Devagar, que o sistema é de 2011.\u201D</p>
+   <div class="row" style="justify-content:center"><input type="text" id="protoIn" placeholder="X-0000" maxlength="7"></div>
+   <div class="row mt" style="justify-content:center"><button class="btn warm" id="protoBtn">🔎 Buscar cupom</button></div>
+   <div class="hintline" id="protoHint"></div>`);
+  $("#protoBtn").onclick=()=>{
+    const v=$("#protoIn").value.toUpperCase().replace(/\s/g,"");
+    if(v==="B-0247"||v==="B0247"||v==="0247"){
+      S.f.farmaciaOk=true; sfx.ok();
+      modal("Cupom localizado — 2ª via",`
+       <div class="ticket" style="max-width:330px;margin:0 auto">FARMA 24H · 2ª VIA<span class="hr"></span>
+        PROTOCOLO: B-0247<br>DATA: SÁB · <b>02h47</b><span class="hr"></span>
+        1x antisséptico ............ 12,90<br>1x curativo borboleta (kit) . 18,50<br>1x analgésico (cartela) ..... 9,80<span class="hr"></span>
+        PAGO EM DINHEIRO (moedas)<br><span style="font-size:11px">obs. do caixa: \u201Ca moça virou os bolsos do rapaz, contou as moedas e disse: tá vendo? você ainda me deve um show\u201D</span></div>
+       <div class="row mt" style="justify-content:center"><button class="btn" id="cupFarmOk">02h47. Mais um marco.</button></div>`);
+      $("#cupFarmOk").onclick=()=>{ closeModal(); addItem("cupomfarm");
+        dialog([
+          {w:"narrador",t:"O cheiro de antisséptico no balcão puxa o resto: as mãos firmes fechando o curativo borboleta, e a voz dela, baixa:"},
+          {w:"marina",t:"\u201CDez anos e você ainda não aprendeu a <em>cair</em>.\u201D"},
+        ],()=>unlockLamp("farmacia"));
+      };
+    } else { sfx.bad(); $("#protoHint").classList.add("on"); $("#protoHint").textContent="\u201CNão consta, meu filho. Confere o carimbo no curativo — letra, traço, número.\u201D"; }
+  };
+}
+function hotTaxi(){
+  if(S.f.taxiOk){ say("Nilton buzina de leve. Já somos quase amigos."); return; }
+  if(!hasItem("recibo")){
+    dialog([
+      {w:"narrador",t:"No ponto, ninguém lembra de Gabriel. Há um quadro de escalas e uma tabela de tarifas pregada no poste."},
+      {w:"gabriel",t:"Se eu tivesse o <em>recibo</em> da corrida… Espera. Eu cheguei em casa <em>de roupa e tudo</em>. Os bolsos da calça! Lá no apartamento!"},
+    ]);
+    return;
+  }
+  puzzleTaxi();
+}
+function puzzleTaxi(){
+  modal("\u201CO taxista da madrugada\u201D — de onde veio a corrida?",`
+   <div class="row" style="align-items:flex-start;gap:20px">
+    <div class="ticket" style="width:220px;flex:0 0 220px">RECIBO · COOP. TÁXI<span class="hr"></span>
+      HORA: <b>06h12</b><br>BANDEIRA: <b>2</b><br>VALOR: <b>R$ 38,40</b><br>ORIGEM: <span style="background:#bfae84;color:#bfae84">██████</span></div>
+    <div class="ticket" style="width:250px;flex:0 0 250px">TABELA DE TARIFAS<span class="hr"></span>
+      BANDEIRADA: R$ 7,50<br>KM (bandeira 2): R$ 4,12<span class="hr"></span>
+      DISTÂNCIAS ATÉ AQUI:<br>· Centro Velho — 3 km<br>· Bar Subsolo — 5 km<br>· Rodoviária Central — 7,5 km<br>· Aeroporto — 14 km</div>
+    <div style="flex:1;min-width:240px">
+      <p class="dimtxt mb">Matemática de calçada: <span class="notenote">7,50 + 4,12 × km = 38,40</span>. A corrida partiu de…</p>
+      <button class="opt" data-z="0">Centro Velho (3 km)</button>
+      <button class="opt" data-z="1">Bar Subsolo (5 km)</button>
+      <button class="opt" data-z="2">Rodoviária Central (7,5 km)</button>
+      <button class="opt" data-z="3">Aeroporto (14 km)</button>
+    </div>
+   </div>`);
+  $$("#mbody [data-z]").forEach(b=>b.onclick=()=>{
+    if(b.dataset.z==="2"){
+      sfx.ok(); closeModal();
+      dialog([
+        {w:"gabriel",t:"7,50 + 4,12 × 7,5 = <em>38,40</em>. Exato. A corrida saiu da <em>Rodoviária Central</em>."},
+        {w:"nilton",t:"Rodoviária, 6 da matina, um maluco dormindo de pé? <em>Fui eu que trouxe!</em> Nilton, plantão das 4. A moça pagou adiantado, contou as moedas na minha mão."},
+        {w:"gabriel",t:"E… como eu entrei em casa? As chaves estavam <em>por dentro</em>."},
+        {w:"nilton",t:"Te ajudei a subir, você abriu na terceira tentativa, e na saída eu joguei as chaves pela <em>fresta</em> — você esqueceu elas na porta, pelo lado de fora. De nada, hein."},
+      ],()=>{ S.f.taxiOk=true; addClue("taxi"); unlockLamp("taxi");
+        setTimeout(()=>dialog([
+          {w:"gabriel",t:"O papel… <em>GVRC</em>. Guarda-Volumes… <em>Rodoviária Central</em>. O chaveiro laranja número 7 está queimando no meu bolso."},
+          {w:"narrador",t:"Conexão dupla no Quadro de Memórias. A noite tem um endereço agora."},
+        ],()=>{ addClue("gvrc"); S.f.rodoOpen=true; toast("🗺️ Novo local: <b>Rodoviária Central</b>"); }),2900);
+      });
+    } else { sfx.bad(); say("A conta não fecha. 7,50 + 4,12 × km… calculadora mental, não me decepciona agora."); }
+  });
+}
+
+/* ============================================================
+   CENA 4 — RODOVIÁRIA CENTRAL
+   ============================================================ */
+SCENES.rodo={
+  time:"SÁB · 21H40",
+  enter(){
+    if(!S.f._rodoIntro){ S.f._rodoIntro=true;
+      dialog([
+        {w:"narrador",t:"\u201CÔnibus com destino a— plataforma doze—\u201D O anúncio ecoa pelo saguão. Gabriel congela."},
+        {w:"gabriel",t:"Esse som. É <em>o som do áudio</em> da Marina. Idêntico. Eu estive <em>aqui</em> esta madrugada."},
+      ]);
+    }
+  },
+  hots(){
+    const H=[];
+    H.push({x:10,y:78,w:30,h:18,l:"Canteiro (barro vermelho)",done:S.f._barroOk,fn:()=>{
+      S.f._barroOk=true;
+      say("Ajoelho e comparo: o barro do canteiro é <em>idêntico</em> ao da minha sola. E há marcas de arrasto… alguém saiu daqui <em>amparado</em>.");
+      refresh();
+    }});
+    H.push({x:35,y:27,w:31,h:43,l:"Guarda-volumes — armário 7",fn:hotArmario});
+    H.push({x:69,y:34,w:14,h:17,l:"Placa de instruções",done:S.f.leuPlaca,fn:()=>{
+      S.f.leuPlaca=true; addClue("placa");
+      modal("COMO ABRIR SEU ARMÁRIO",`
+       <div class="paper">
+         <p style="font-family:var(--mono);font-size:14px"><b>1.</b> Insira a ficha na portinhola externa.</p>
+         <p style="font-family:var(--mono);font-size:14px"><b>2.</b> No cadeado interno, gire o disco à <b>DIREITA</b> até o <b>primeiro número</b> do seu segredo.</p>
+         <p style="font-family:var(--mono);font-size:14px"><b>3.</b> Gire à <b>ESQUERDA</b> até o <b>segundo número</b>.</p>
+         <p style="font-family:var(--mono);font-size:14px"><b>4.</b> Puxe a alavanca. Boa viagem!</p>
+       </div>
+       <div class="row mt"><button class="btn" onclick="closeModal()">\u201CDois números. Não quatro dígitos.\u201D</button></div>`);
+      refresh();
+    }});
+    H.push({x:74,y:64,w:21,h:14,l:"Banco de metal",done:!!S.lamps.banco,fn:()=>{
+      if(S.lamps.banco){ say("O banco mais frio e mais importante da minha vida."); return; }
+      dialog([
+        {w:"gabriel",t:"Sento no banco. Frio de metal de madrugada, mesmo agora à noite."},
+        {w:"narrador",t:"E o corpo lembra antes da mente: o anúncio da plataforma, o peso do sono, a voz dela cada vez mais longe…"},
+      ],()=>{ unlockLamp("banco"); refresh(); });
+    }});
+    H.push({x:6,y:29,w:25,h:21,l:"Painel de partidas",fn:()=>{
+      say("\u201CDOM 07h00 — LITORAL NORTE — <em>PLATAFORMA 12</em> — CONFIRMADO.\u201D O relógio invisível da minha vida, em LED verde.");
+    }});
+    H.push({x:0,y:88,w:12,h:11,l:"Ir para…",fn:openMap});
+    return H;
+  }
+};
+function hotArmario(){
+  if(S.f.armario){ say("O armário 7, vazio, cumpriu sua missão de cofre do destino."); return; }
+  if(!hasItem("chaveiro")){
+    say("Armário 7. A portinhola externa pede uma <em>ficha</em>. Eu já vi uma ficha laranja em algum lugar… mas não está comigo.");
+    return;
+  }
+  if(!S.f._fichaUsada){
+    S.f._fichaUsada=true;
+    dialog([
+      {w:"gabriel",t:"A ficha laranja entra, gira… <em>clac</em>. A portinhola externa abre."},
+      {w:"gabriel",t:"Mas dentro há um <em>segundo cadeado</em>, de segredo, com um disco giratório. O papel diz \u201C7-41-25\u201D."},
+    ],()=>puzzleArmario());
+    return;
+  }
+  puzzleArmario();
+}
+function puzzleArmario(){
+  if(!S.f.tentou4125){
+    modal("Armário 7 — o segredo",`
+     <p class="dimtxt mb">O bilhete: <b>7-41-25</b>. O 7 é o armário. Sobram <b>41-25</b>… quatro dígitos?</p>
+     <div class="row" style="justify-content:center"><input type="number" id="seg4" placeholder="0000" style="font-size:24px;width:140px"></div>
+     <div class="row mt" style="justify-content:center"><button class="btn warm" id="seg4btn">Tentar</button></div>`);
+    $("#seg4btn").onclick=()=>{
+      sfx.bad(); S.f.tentou4125=true; closeModal();
+      dialog([
+        {w:"gabriel",t:"\u201C4-1-2-5\u201D… nada. Outra ordem… nada. O cadeado me encara com suas janelinhas de desprezo."},
+        {w:"gabriel",t:"Calma. Pensa. \u201C41-25\u201D, escrito <em>com hífen</em>… Talvez não seja um código de 4 dígitos. Talvez seja do jeito que <em>este lugar</em> escreve segredos."},
+        {w:"narrador",t:"Há uma placa amarelada na parede do guarda-volumes. Gente apressada nunca lê placas."},
+      ],()=>say("Talvez valha <em>ler a placa de instruções</em> na parede."));
+    };
+    return;
+  }
+  if(!S.f.leuPlaca){ say("O cadeado de disco me espera. E a <em>placa na parede</em> também."); return; }
+  let dir=0, esq=0;
+  modal("Armário 7 — cadeado de disco",`
+   <p class="dimtxt mb">Como a placa manda: gire à <b>DIREITA</b> até o 1º número, à <b>ESQUERDA</b> até o 2º, e puxe a alavanca.</p>
+   <div class="row" style="justify-content:center;gap:34px">
+     <div class="dial"><label>① DIREITA ⟳</label><div class="val" id="dDir">00</div>
+       <div class="ctr"><button class="btn ghost" id="dDirDn">−</button><button class="btn ghost" id="dDirUp">+</button></div></div>
+     <div class="dial"><label>② ESQUERDA ⟲</label><div class="val" id="dEsq">00</div>
+       <div class="ctr"><button class="btn ghost" id="dEsqDn">−</button><button class="btn ghost" id="dEsqUp">+</button></div></div>
+   </div>
+   <div class="row mt" style="justify-content:center"><button class="btn warm" id="alav">⤓ Puxar a alavanca</button></div>
+   <p class="dimtxt mt" style="text-align:center">O bilhete sussurra: 7-<b>41</b>-<b>25</b>.</p>`);
+  const upd=()=>{ $("#dDir").textContent=String(dir).padStart(2,"0"); $("#dEsq").textContent=String(esq).padStart(2,"0"); };
+  $("#dDirUp").onclick=()=>{dir=(dir+1)%60;tone(500+dir*4,0.04,"square",0.04);upd()};
+  $("#dDirDn").onclick=()=>{dir=(dir+59)%60;tone(500+dir*4,0.04,"square",0.04);upd()};
+  $("#dEsqUp").onclick=()=>{esq=(esq+1)%60;tone(420+esq*4,0.04,"square",0.04);upd()};
+  $("#dEsqDn").onclick=()=>{esq=(esq+59)%60;tone(420+esq*4,0.04,"square",0.04);upd()};
+  $("#alav").onclick=()=>{
+    if(dir===41&&esq===25){ S.f.armario=true; sfx.ok(); closeModal(); openLocker(); }
+    else { sfx.bad(); say("\u201CClonc.\u201D Nada. Direita até o primeiro número do bilhete, esquerda até o segundo…"); }
+  };
+}
+function openLocker(){
+  dialog([
+    {w:"narrador",t:"Direita, 41. Esquerda, 25. <em>Clác.</em> A resposta sempre esteve no papel — faltava o contexto."},
+    {w:"narrador",t:"A porta abre. Lá dentro, encostada com cuidado de quem entende:"},
+    {w:"gabriel",t:"<em>A Giannini.</em> Intacta. Pai… ela está intacta."},
+    {w:"narrador",t:"Junto dela: uma carta. E uma fita cassete rotulada à mão — \u201CVértice — \u2018Depois da Meia-Noite\u2019 (demo, nunca terminada)\u201D."},
+  ],()=>{
+    addItem("guitarra"); addItem("carta"); addItem("fita");
+    goScene("rodo");
+    setTimeout(()=>showCartaMarina(false),600);
+  });
+}
+function showCartaMarina(fromInv){
+  modal("A carta de Marina",`
+   <div class="paper">
+     <p><i>Gabriel.</i></p>
+     <p>Você tentou me dar a coisa mais importante da sua vida às 5 da manhã, bêbado, com um corte na cara
+     que ganhou por minha causa. Eu não aceitei, porque essa guitarra não é minha — mas também não é só sua:
+     <b>é do cara que você ficou devendo ser.</b></p>
+     <p>Termina a música.</p>
+     <p>Meu ônibus agora é só <b>domingo, 7h, plataforma 12</b>. Se você decifrou este bilhete, ainda dá tempo.
+     Se não decifrou… bom, então nada mudou em dez anos.</p>
+     <p class="sig">— M.</p>
+   </div>
+   <div class="row mt"><button class="btn" id="cartaOk">${fromInv?"Fechar":"\u201CTermina a música.\u201D"}</button></div>`);
+  $("#cartaOk").onclick=()=>{
+    closeModal();
+    if(!S.f.cartaMarina){
+      S.f.cartaMarina=true; addClue("domingo");
+      dialog([
+        {w:"gabriel",t:"\u201CTermina a música\u201D… A demo. A fita. Mas quem é que <em>toca fita cassete</em> em 2026?"},
+        {w:"gabriel",t:"…O rádio-gravador do meu pai. Na caixa, em cima do armário. <em>Para casa.</em>"},
+      ],()=>{ S.f.aptNoite=true; S.f.plataformaOpen=true;
+        toast("🗺️ <b>Apartamento (noite)</b> e <b>Plataforma 12 (domingo, 7h)</b> no mapa");
+        say("O relógio invisível ficou visível: <em>domingo, 7h, plataforma 12</em>."); });
+    }
+  };
+}
+function deepGuitarra(){
+  modal("Giannini 1978 — examinar a fundo",`
+   <div style="text-align:center">${ICON.guitarra.replace('viewBox="0 0 60 60"','viewBox="0 0 60 60" style="height:120px"')}</div>
+   <p>Giro o corpo contra a luz. Nenhum arranhão novo. O verniz gasto onde o braço do meu pai descansava — e onde o meu descansa igual.</p>
+   <p class="mt">Atrás da pestana, presa nas cordas… uma <b>palheta que não é minha</b>. Roxa. Com marcas de dente.</p>
+   <p class="dimtxt mt">Marina roía palhetas quando estava nervosa. Dez anos atrás. Sempre.</p>
+   <div class="row mt"><button class="btn warm" id="palhetaBtn">Segurar a palheta</button></div>`);
+  $("#palhetaBtn").onclick=()=>{
+    closeModal();
+    if(!S.lamps.presente){
+      dialog([
+        {w:"narrador",t:"A palheta entre os dedos — e a madrugada volta inteira: ele empurrando a guitarra contra o peito dela, três vezes."},
+        {w:"marina",t:"\u201CNão. NÃO, Gabriel. Essa guitarra não é minha. Para de tentar se livrar do que você ama.\u201D"},
+      ],()=>unlockLamp("presente"));
+    } else say("A palheta roxa. Guardada no bolso de cima, perto de onde dói bom.");
+  };
+}
+
+/* ============================================================
+   CENA 5 — APARTAMENTO (noite) + PUZZLE 10
+   ============================================================ */
+SCENES.aptN={
+  time:"SÁB · 23H30",
+  enter(){
+    if(!S.f._aptNIntro){ S.f._aptNIntro=true;
+      dialog([
+        {w:"narrador",t:"23h30. O apartamento à noite é outro bicho: a luz do poste entra amarela, e a Giannini voltou para casa — no colo, não na parede."},
+        {w:"gabriel",t:"A caixa do meu pai. O rádio-gravador. Vinte anos parado… tomara que só de teimosia."},
+      ]);
+    }
+  },
+  hots(){
+    const H=[];
+    H.push({x:69,y:38,w:14,h:14,l:"Rádio-gravador do pai",fn:hotRadio});
+    H.push({x:0.5,y:58,w:8.5,h:9,l:"Gaveta da cozinha",done:hasItem("elastico"),fn:()=>{
+      if(!hasItem("elastico")){ addItem("elastico"); say("O <em>elástico de dinheiro</em>. Sabia que essa gaveta ainda me devia uma."); refresh();}
+      else say("A gaveta-de-tudo já deu tudo.");
+    }});
+    H.push({x:85,y:33,w:7,h:8,l:"Caixa de cartas antigas",done:S.f.cartaAntiga,fn:()=>{
+      if(!S.f.cartaAntiga) showCartaAntiga(false);
+      else say("A carta de dez anos atrás. Lida, enfim. Tarde, mas lida.");
+    }});
+    H.push({x:25,y:55,w:25,h:22,l:"Cama",fn:()=>{
+      dialog([
+        {w:"gabriel",t:"A cama me chama. Eu podia simplesmente… dormir. Acordar segunda. Fingir que essa noite não existiu — <em>de novo</em>.",
+         choices:[
+           {t:"🛏️ Dormir e desistir de tudo",fn:confirmDesistir},
+           {t:"🎸 Nem pensar. Tenho uma música para terminar.",fn:()=>say("A música primeiro. O resto da vida depois.")}
+         ]}
+      ]);
+    }});
+    H.push({x:92.5,y:64,w:7,h:35,l:"Porta — sair",fn:openMap});
+    return H;
+  }
+};
+function hotRadio(){
+  if(S.f.musica){ say("O rádio descansa. A fita também. A música, enfim, <em>existe</em>."); return; }
+  if(!hasItem("fita")){ say("O rádio do pai. Sem nada para tocar nele… ainda."); return; }
+  if(!S.f.radioOk){
+    if(!hasItem("elastico")){
+      say("Abro a tampa: a <em>correia derretida</em> virou chiclete de museu. Preciso de algo elástico, do tamanho certo… A gaveta da cozinha nunca falha.");
+      return;
+    }
+    puzzleCorreia();
+    return;
+  }
+  if(!S.f.demoTocada){ playDemo(); return; }
+  puzzleMelodia();
+}
+function puzzleCorreia(){
+  let tensao=20;
+  modal("Conserto — a correia do rádio",`
+   <p class="dimtxt mb">O elástico de dinheiro entra no lugar da correia. Mas precisa da <b>tensão exata</b>: frouxo, a fita arrasta; esticado, guincha. Ajuste e teste.</p>
+   <div style="max-width:420px;margin:0 auto;text-align:center">
+     <div style="font-family:var(--mono);font-size:42px;color:var(--warm)" id="tenVal">20</div>
+     <input type="range" min="0" max="100" value="20" id="tenSlide" style="width:100%">
+     <div class="row mt" style="justify-content:center"><button class="btn warm" id="tenTest">▶ Testar</button></div>
+     <p class="dimtxt mt" id="tenFeed">…</p>
+   </div>`);
+  $("#tenSlide").oninput=e=>{tensao=+e.target.value;$("#tenVal").textContent=tensao;};
+  $("#tenTest").onclick=()=>{
+    if(tensao<55){ tone(70,0.7,"sawtooth",0.08); $("#tenFeed").innerHTML="O carretel <b>arrasta</b> — som grave, derretido. Mais tensão."; }
+    else if(tensao>70){ tone(1500,0.5,"sawtooth",0.06); $("#tenFeed").innerHTML="<b>Guincho</b> de gaveta possuída. Menos tensão."; }
+    else {
+      S.f.radioOk=true; sfx.ok(); closeModal();
+      dialog([
+        {w:"gabriel",t:"…Girou. Redondo, constante. Pai, teu rádio é imortal — e a tua gambiarra agora é hereditária."},
+      ],()=>playDemo());
+    }
+  };
+}
+/* notas para a melodia */
+const NOTAS=[
+  {n:"Dó",f:261.63},{n:"Ré",f:293.66},{n:"Mi",f:329.63},{n:"Fá",f:349.23},
+  {n:"Sol",f:392.00},{n:"Lá",f:440.00},{n:"Si",f:493.88},{n:"Dó↑",f:523.25}
+];
+const VERSO=[2,2,4,5,4,3,2,1];      // mi mi sol lá sol fá mi ré
+const REFRAO=[4,5,6,5,4,2];          // sol lá si lá sol mi
+function playSeq(seq,gap=0.34,type="triangle"){
+  seq.forEach((ni,i)=>{ tone(NOTAS[ni].f,0.3,type,0.14,i*gap); tone(NOTAS[ni].f*2,0.22,"sine",0.04,i*gap); });
+  return seq.length*gap;
+}
+function playDemo(){
+  S.f.demoTocada=true;
+  modal("A fita — \u201CDepois da Meia-Noite (demo)\u201D",`
+   <div class="paper" style="background:#1a1410;color:#ffd9a0;font-family:var(--sans)">
+     <p style="font-family:var(--mono);font-size:12px;color:#caa14b">▶ LADO A · chiado de fita · uma guitarra, duas vozes jovens</p>
+     <p class="mt"><i>(a voz do Gabriel de 22 anos)</i> \u201CToma três… \u2018Depois da Meia-Noite\u2019, tentativa… sei lá, quarenta?\u201D</p>
+     <p><i>(a risada da Marina de 21)</i> \u201CToca logo!\u201D</p>
+     <p class="mt" style="font-family:var(--mono)" id="demoNotas">…</p>
+   </div>
+   <div class="row mt"><button class="btn warm" id="demoPlay">▶ Tocar a demo</button></div>`);
+  $("#demoPlay").onclick=()=>{
+    $("#demoNotas").textContent="VERSO: "+VERSO.map(i=>NOTAS[i].n).join(" · ");
+    const d=playSeq(VERSO);
+    setTimeout(()=>{
+      tone(180,1.4,"sawtooth",0.025);
+      $("#demoNotas").textContent+="   →   REFRÃO: (a fita corta no meio) …";
+      setTimeout(()=>{ closeModal();
+        dialog([
+          {w:"narrador",t:"A demo toca… e <em>para no meio do refrão</em>. Vinte e poucos anos de idade interrompidos por uma fita mastigada."},
+          {w:"gabriel",t:"O refrão nunca foi gravado porque nunca foi <em>terminado</em>. \u201CTermina a música.\u201D Tá. Com a Giannini no colo… vamos terminar."},
+        ],()=>puzzleMelodia());
+      },1200);
+    },d*1000+300);
+  };
+}
+let melTent=0;
+function puzzleMelodia(){
+  let seq=[];
+  modal("\u201CA música inacabada\u201D — terminar o refrão",`
+   <p class="dimtxt mb">O verso <b>sobe</b> e pede resposta. Complete o refrão com <b>6 notas</b>:
+   ele sobe <b>um degrau acima do topo do verso</b>… e desce até <b>repousar no Mi</b>, a nota de casa. Sem pressa: a fita espera.</p>
+   <div class="row mb" style="gap:10px">
+     <button class="btn ghost" id="melVerso">▶ Ouvir o verso</button>
+     <span class="notenote">verso: ${VERSO.map(i=>NOTAS[i].n).join(" ")}</span>
+   </div>
+   <div class="row" style="justify-content:center;gap:8px">
+     ${NOTAS.map((n,i)=>`<button class="notebtn" data-n="${i}">${n.n}</button>`).join("")}
+   </div>
+   <div class="row mt" style="justify-content:space-between">
+     <div class="seqview" id="melSeq">—</div>
+     <div class="row">
+       <button class="btn ghost" id="melClear">↺</button>
+       <button class="btn warm" id="melGo">🎸 Tocar o refrão</button>
+     </div>
+   </div>
+   <div class="hintline" id="melHint"></div>`);
+  const upd=()=>$("#melSeq").textContent=seq.length?seq.map(i=>NOTAS[i].n).join(" · "):"—";
+  $("#melVerso").onclick=()=>playSeq(VERSO);
+  $("#melClear").onclick=()=>{seq=[];upd();};
+  $$(".notebtn").forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.n; if(seq.length>=6)return;
+    tone(NOTAS[i].f,0.3,"triangle",0.14); tone(NOTAS[i].f*2,0.2,"sine",0.04);
+    b.classList.add("hit"); setTimeout(()=>b.classList.remove("hit"),200);
+    seq.push(i); upd();
+  });
+  $("#melGo").onclick=()=>{
+    if(seq.length<6){ $("#melHint").classList.add("on"); $("#melHint").textContent="Seis notas. O refrão respira em seis."; return; }
+    playSeq(seq);
+    setTimeout(()=>{
+      if(seq.join(",")===REFRAO.join(",")){
+        S.f.musica=true; sfx.ok(); closeModal(); finishMusic();
+      } else {
+        melTent++;
+        sfx.bad(); seq=[]; upd();
+        const com=[
+          "Não… ela <em>odiaria</em> essa. E me diria na cara, rindo.",
+          "Quase. Mas \u201Cquase\u201D em música é outra música.",
+          "O refrão precisa <em>responder</em> ao verso: o verso sobe até o <b>Lá</b>… o refrão sobe um degrau a mais (<b>Si</b>) e volta pra casa, no <b>Mi</b>.",
+          "Tenta assim: começa no <b>Sol</b>, sobe <b>Lá, Si</b>… e desce <b>Lá, Sol</b>… pousando no <b>Mi</b>."
+        ];
+        $("#melHint").classList.add("on");
+        $("#melHint").innerHTML=com[Math.min(melTent-1,com.length-1)];
+        say("Errar faz parte. Dez anos de \u201Cano que vem eu termino\u201D também eram um tipo de erro.");
+      }
+    },6*340+200);
+  };
+}
+function finishMusic(){
+  dialog([
+    {w:"narrador",t:"Sol. Lá. Si. Lá. Sol… <em>Mi.</em> O refrão encaixa como chave em fechadura antiga."},
+    {w:"narrador",t:"E a noite inteira volta de uma vez, em montagem: a terceira fileira — o neon — o pastel — a queda — as mãos dela — a cidade vazia — a guitarra recusada — o banco — o bilhete no bolso — o táxi laranja de amanhecer."},
+    {w:"marina",t:"\u201CGuarda bem o papel, tá?\u201D"},
+    {w:"gabriel",t:"Guardei, Marina. Demorei dez anos e uma ressaca… mas guardei."},
+  ],()=>{
+    unlockLamp("despedida");
+    setTimeout(()=>{
+      say("A música existe. O ônibus sai às <em>7h, plataforma 12</em>. O Quadro de Memórias pede ordem — e eu peço coragem.");
+      toast("🌅 Quando estiver pronto: <b>Plataforma 12</b>, no mapa");
+    },3000);
+  });
+}
+
+/* ============================================================
+   FINAIS
+   ============================================================ */
+function confirmDesistir(){
+  dialog([
+    {w:"narrador",t:"Desistir agora encerra a história — o Final \u201CO suporte vazio\u201D. Tem certeza?",
+     choices:[
+       {t:"😴 Sim. Dormir. Acabou.",fn:()=>ending("C")},
+       {t:"↩ Não. Ainda não acabou.",fn:()=>say("Ainda não acabou.")}
+     ]}
+  ]);
+}
+function confirmPlataforma(){
+  const falta=[];
+  if(!S.f.musica) falta.push("a <b>música</b> continua inacabada");
+  if(lampCount()<12) falta.push(`faltam <b>${12-lampCount()} lampejos</b> da noite`);
+  else if(!timelinePerfect()) falta.push("o <b>Quadro de Memórias</b> ainda está fora de ordem");
+  if(!S.f.cartaAntiga) falta.push("há uma <b>caixa de cartas antigas</b> que eu nunca tive coragem de abrir");
+  const msg=falta.length?
+    `É quase hora. Mas alguma coisa pesa: ${falta.join("; ")}. Posso ir assim mesmo — ou voltar e resolver.`:
+    `A noite inteira está em ordem dentro de mim. A música existe. As cartas foram lidas. <em>É hora.</em>`;
+  dialog([
+    {w:"gabriel",t:msg,choices:[
+      {t:"🌅 Ir para a Plataforma 12 (sem volta)",fn:goFinal},
+      {t:"↩ Ainda não",fn:()=>{}}
+    ]}
+  ]);
+}
+function goFinal(){
+  clock("DOM · 06H52");
+  const tipo=(S.f.musica && S.f.cartaAntiga && lampCount()===12 && timelinePerfect())?"A":"B";
+  S.scene="plat"; buildScene("plat",false);
+  if(tipo==="A"){
+    dialog([
+      {w:"narrador",t:"Domingo, 6h52. Gabriel atravessa o saguão correndo, a Giannini batendo nas costas como um coração fora do corpo."},
+      {w:"narrador",t:"Plataforma 12. O motor já ronca. E ela está lá — jaqueta jeans, mala pequena, dez anos e oito horas de distância."},
+      {w:"marina",t:"…Você decifrou."},
+      {w:"gabriel",t:"Decifrei <em>tudo</em>. O bilhete. O armário. O Edmilson — três versões da briga, Marina, TRÊS. E as cartas. <em>As duas.</em>"},
+      {w:"marina",t:"As… duas?"},
+      {w:"gabriel",t:"A de dez anos atrás também. Eu li. Eu devia ter respondido. Mas eu não vim aqui para falar."},
+      {w:"narrador",t:"Ele não declara nada. Senta na beirada da plataforma, tira a Giannini do ombro… e <em>toca</em>."},
+      {w:"narrador",t:"Sol. Lá. Si. Lá. Sol. Mi. O refrão que faltava, inteiro, na cara do amanhecer."},
+      {w:"narrador",t:"O motorista chama. Marina olha o ônibus. Olha o Gabriel. Olha o ônibus…"},
+      {w:"narrador",t:"…e senta na beirada da plataforma também."},
+      {w:"marina",t:"Perdi o ônibus. <em>De propósito.</em> Você ainda me deve um show inteiro — e a segunda voz é minha."},
+    ],()=>ending("A"));
+  } else {
+    dialog([
+      {w:"narrador",t:"Domingo, 6h52. Gabriel chega à plataforma 12 com a guitarra nas costas e a noite ainda cheia de buracos."},
+      {w:"marina",t:"…Você veio. Você decifrou?"},
+      {w:"gabriel",t:"Parte. Decifrei… parte. O resto eu vou ficar devendo. Como sempre, né?"},
+      {w:"narrador",t:"O reencontro é caloroso — e inconcluso. Trocam números novos, promessas razoáveis, um abraço que dura um segundo a menos do que devia."},
+      {w:"narrador",t:"O ônibus engata a primeira. Pela janela, ela ainda acena — e aponta para a guitarra, articulando sem som: \u201Ctermina\u201D."},
+    ],()=>ending("B"));
+  }
+}
+async function ending(tipo){
+  if(tipo==="A") playSeq(REFRAO,0.4);
+  if(tipo!=="C"){
+    const name=await promptPlayerName();
+    if(name) await dbScore(name, tipo);
+  }
+  const data={
+    A:{k:"FINAL A",h:"\u201CDepois da Meia-Noite\u201D",
+       p:"A música terminada, tocada na plataforma 12 — a música que <b>você</b> montou. Ela perdeu o ônibus de propósito. Os créditos sobem com a gravação completa: Sol · Lá · Si · Lá · Sol · Mi.<br><br><i>Algumas noites a gente recupera inteiras.</i>"},
+    B:{k:"FINAL B",h:"\u201CPlataforma 12\u201D",
+       p:"Ele chegou — mas sem entender tudo. Contatos trocados, ônibus partido, refrão pendente.<br><br><i>\u201CAlgumas noites a gente recupera. Outras, reconstrói.\u201D</i><br><br>Há mais noite para encontrar: lampejos opcionais, cartas não lidas, uma música inacabada. Vale jogar de novo."},
+    C:{k:"FINAL C",h:"\u201CO suporte vazio\u201D",
+       p:"Segunda-feira. Semanas depois, o guarda-volumes devolve a guitarra pelo correio, junto com uma carta já sem prazo. Gabriel a pendura de volta na parede — no mesmo suporte, na mesma vida.<br><br><i>Nada mudou em dez anos.</i>"}
+  }[tipo];
+  S.f.fim=tipo;
+  let extra="";
+  if(tipo==="C"){
+    const perdidos=LAMPS.filter(l=>!S.lamps[l.id]).map(l=>`· ${l.t} — <b>${l.h}</b>: ${l.d}`).join("<br>");
+    extra=`<div style="text-align:left;max-width:620px;margin:22px auto 0;background:#10141f;border:1px solid var(--line);border-radius:12px;padding:16px;font-size:13px;line-height:1.7;max-height:32vh;overflow:auto">
+      <b style="color:var(--warm)">GALERIA — \u201CO que você não viu\u201D</b><br>${perdidos||"(você tinha visto tudo. Doeu mais ainda.)"}</div>`;
+  }
+  $("#actk").textContent=data.k;
+  $("#acth").textContent=data.h;
+  $("#actp").innerHTML=data.p+extra;
+  $("#act").classList.add("on");
+  $("#actgo").textContent="↺ Jogar de novo";
+  $("#actgo").onclick=()=>location.reload();
+}
+
+/* ============================================================
+   TÍTULO / INÍCIO
+   ============================================================ */
+$("#titlebg").innerHTML=`<svg viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid slice">
+  <rect width="1280" height="720" fill="#05070c"/>
+  ${Array.from({length:60},(_,i)=>`<circle cx="${(i*211)%1280}" cy="${(i*97)%400}" r="${1+(i%3)*0.5}" fill="#fff" opacity="${0.15+(i%4)*0.12}"/>`).join("")}
+  <g fill="#0c1018">${[[0,420,160,300],[180,360,120,360],[320,460,140,260],[480,400,110,320],[610,470,150,250],[780,380,130,340],[930,440,120,280],[1070,390,110,330],[1190,460,90,260]].map(b=>`<rect x="${b[0]}" y="${b[1]}" width="${b[2]}" height="${b[3]}"/>`).join("")}</g>
+  ${Array.from({length:40},(_,i)=>`<rect x="${20+(i*67)%1240}" y="${400+(i*47)%280}" width="9" height="13" fill="${i%5?"#ffd9a0":"#ff4d7d"}" opacity="${0.12+(i%4)*0.1}"/>`).join("")}
+  <ellipse cx="640" cy="690" rx="700" ry="90" fill="#ff4d7d" opacity=".06"/>
+  <g transform="translate(1050,540)" opacity=".55">
+    <path d="M60 0 l10 10 -34 34 a22 22 0 1 1 -10 -10 Z" fill="#1c2233" stroke="#39435c" stroke-width="2"/>
+  </g>
+</svg>`;
+$("#startBtn").onclick=()=>{
+  ac(); sfx.ok();
+  $("#title").style.transition="opacity .8s"; $("#title").style.opacity=0;
+  setTimeout(async ()=>{ $("#title").remove();
+    await dbInit();
+    const savedScene = await dbLoad();
+    if(savedScene){
+      showContinueModal(savedScene);
+    } else {
+      gameStartTime = Date.now();
+      actCard("ATO 1","O Apartamento","Sábado, 9h47. Tudo neste quarto conta uma história. Inclusive o que <b>não</b> está nele.",()=>{
+        updateHud(); goScene("apt");
+      });
+    }
+  },800);
+};
+/* atalho ESC fecha modal */
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && $("#modalveil").classList.contains("on")) closeModal(); });
+updateHud();
+</script>
+</body>
+</html>
