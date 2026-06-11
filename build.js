@@ -1,5 +1,5 @@
 // build.js — injeta config do Firebase no HTML e copia para dist/
-import { readFileSync, writeFileSync, mkdirSync } from 'fs'
+import { readFileSync, writeFileSync, mkdirSync, cpSync } from 'fs'
 import { config } from 'dotenv'
 config()
 
@@ -18,4 +18,5 @@ const out = html.replace(
 )
 mkdirSync('dist', { recursive: true })
 writeFileSync('dist/index.html', out)
-console.log('Build ok →', 'dist/index.html')
+cpSync('img', 'dist/img', { recursive: true })
+console.log('Build ok →', 'dist/index.html (+ img/)')

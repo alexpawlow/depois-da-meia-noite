@@ -1,12 +1,12 @@
 # Depois da Meia-Noite
 
-Jogo de aventura narrativa / escape room em primeira pessoa, inspirado em *The White Room 3D*. Roda 100% no navegador como um único arquivo HTML estático, com Three.js (CDN) e WebAudio nativa.
+Jogo de aventura narrativa / point-and-click com cenários fotográficos cinematográficos. Roda 100% no navegador como HTML estático + imagens, com WebAudio nativa, hotspots clicáveis e parallax sutil de câmera.
 
 ## Stack
 
 - **Hosting:** Vercel (build estático)
 - **Backend/DB:** Firebase (Auth anônimo + Firestore — saves, placar, analytics)
-- **Engine:** Three.js r128 via CDN, zero dependências locais
+- **Engine:** motor próprio de cenas 2D (backdrops em `img/` + hotspots em %), zero dependências locais
 
 ## Desenvolvimento local
 
@@ -53,7 +53,8 @@ As regras de segurança estão em `firestore.rules` (publique com `firebase depl
 ```
 depois-da-meia-noite/
 ├── depois-da-meia-noite.html   ← fonte principal (não editar dist)
-├── build.js                    ← injeta env vars
+├── img/                        ← cenários fotográficos e avatares (apt, aptN, bar, rua, rodo, plat…)
+├── build.js                    ← injeta env vars e copia img/ para dist/
 ├── package.json
 ├── .env.example                ← template de variáveis (não commitar .env real)
 ├── vercel.json
