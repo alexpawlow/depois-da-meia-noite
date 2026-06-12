@@ -99,5 +99,5 @@ O mesmo quarto do Ato 1, à noite: abajur aceso, luz de poste amarela pela janel
 
 ## Avatares (close de rosto, usados nos diálogos)
 
-Todos fotográficos: **Gabriel** (`img/gabriel.jpg`), **Tonho** (`img/tonho.jpg`), **Marina** (`img/marina.jpg`), **Léo** (`img/leo.jpg`), **Seu Edmilson** (`img/edmilson.jpg`), **Dona Cida** (`img/cida.jpg`), **Nilton** (`img/nilton.jpg`). Só o **Narrador** segue como ícone SVG (relógio).
+Todos fotográficos: **Gabriel** (`img/gabriel.jpg`), **Tonho** (`img/tonho.jpg`), **Marina** (`img/marina.jpg`), **Léo** (`img/leo.jpg`), **Seu Edmilson** (`img/edmilson.jpg`), **Dona Cida** (`img/cida.jpg`), **Nilton** (`img/nilton.jpg`), **Caio** (`img/caio.jpg` — ex da Marina; aparece como "O homem de boné" no flashback da reconstituição com Edmilson e é nomeado pela Marina no Final A). Só o **Narrador** segue como ícone SVG (relógio).
 Extra: `img/story.jpg` — story do Instagram (@lais.rockon) exibido no celular do Gabriel ("CIDADE FANTASMA · a 4ª do set").

@@ -468,6 +468,7 @@ function face(id){
     case "cida": return `<img src="img/cida.jpg" alt="Dona Cida" style="width:100%;height:100%;object-fit:cover">`;
     case "nilton": return `<img src="img/nilton.jpg" alt="Nilton" style="width:100%;height:100%;object-fit:cover">`;
     case "leo": return `<img src="img/leo.jpg" alt="Léo" style="width:100%;height:100%;object-fit:cover">`;
+    case "caio": return `<img src="img/caio.jpg" alt="O homem de boné" style="width:100%;height:100%;object-fit:cover;filter:brightness(.8) contrast(1.08)">`;
     case "narrador": return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#10141f"/>
        <circle cx="50" cy="50" r="26" fill="none" stroke="#ff4d7d" stroke-width="2" opacity=".8"/>
        <line x1="50" y1="50" x2="50" y2="32" stroke="#ffb454" stroke-width="2.5" stroke-linecap="round"/>
@@ -477,7 +478,7 @@ function face(id){
   return face("gabriel");
 }
 const NAMES={gabriel:"Gabriel",marina:"Marina",tonho:"Tonho",edmilson:"Seu Edmilson",cida:"Dona Cida",
-  nilton:"Nilton (taxista)",leo:"Léo",narrador:"Narrador"};
+  nilton:"Nilton (taxista)",leo:"Léo",caio:"O homem de boné",narrador:"Narrador"};
 
 /* ---------- CAPTION / TOAST ---------- */
 function say(text,who="gabriel"){
@@ -1666,6 +1667,8 @@ function puzzleEdmilson(){
         {w:"edmilson",t:"…É. Contado assim, sem tempero, foi <em>isso</em>. O boné empurrou, você caiu, a moça gritou, eu gritei mais alto. Fim."},
         {w:"gabriel",t:"Então eu <em>não bati em ninguém</em>. Eu entrei na frente dela. E levei a pior. E o sangue no punho… é meu."},
         {w:"narrador",t:"O medo que rondava a manhã inteira se desfaz — e no lugar dele, a memória volta nítida: o boné, o empurrão, a voz dela."},
+        {w:"caio",t:"“Fica. <em>Longe</em>. Dela.”"},
+        {w:"gabriel",t:"…E o <em>rosto</em> dele voltou junto com a voz. Moreno, barba por fazer, cara de quem não dorme bem. O mesmo número desconhecido, aposto. Quem <em>é</em> você?"},
       ],()=>{ addClue("briga"); unlockLamp("queda");
         setTimeout(()=>dialog([
           {w:"edmilson",t:"Ah, e o final: a moça saiu daqui com você <em>amparado no ombro</em>, rumo à <em>farmácia da Cida</em>. Cena de cinema. Eu chorei? Chorei. Tava cortando cebola? Tava. Mas chorei."},
@@ -2137,6 +2140,8 @@ function goFinal(){
       {w:"gabriel",t:"Decifrei <em>tudo</em>. O bilhete. O armário. O Edmilson — três versões da briga, Marina, TRÊS. E as cartas. <em>As duas.</em>"},
       {w:"marina",t:"As… duas?"},
       {w:"gabriel",t:"A de dez anos atrás também. Eu li. Eu devia ter respondido. Mas eu não vim aqui para falar."},
+      {w:"gabriel",t:"…Só me responde uma coisa antes. O <em>boné</em>."},
+      {w:"marina",t:"Caio. Meu ex. Três meses insistindo que o fim era “negociável”. Ontem — entre você entrando na frente do empurrão e o Edmilson berrando pro quarteirão inteiro — deixou de ser. Bloqueado, encerrado, <em>passado</em>."},
       {w:"narrador",t:"Ele não declara nada. Senta na beirada da plataforma, tira a Giannini do ombro… e <em>toca</em>."},
       {w:"narrador",t:"Sol. Lá. Si. Lá. Sol. Mi. O refrão que faltava, inteiro, na cara do amanhecer."},
       {w:"narrador",t:"O motorista chama. Marina olha o ônibus. Olha o Gabriel. Olha o ônibus…"},
