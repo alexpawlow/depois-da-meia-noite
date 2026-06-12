@@ -969,7 +969,7 @@ function showContinueModal(savedScene){
 
 /* ---------- MAPA ---------- */
 const MAP_SPOTS=[
-  {id:"apt", x:19,   y:12, w:16.5, h:26,   on:()=>true},
+  {id:"apt", x:19,   y:12, w:16.5, h:26,   on:()=>!S.f.aptNoite},
   {id:"bar", x:42.5, y:10, w:17.5, h:26.5, on:()=>S.f.barOpen},
   {id:"rua", x:71,   y:12, w:18.5, h:26,   on:()=>S.f.ruaOpen},
   {id:"aptN",x:22,   y:49, w:17.5, h:26,   on:()=>S.f.aptNoite},
@@ -2025,6 +2025,7 @@ SCENES.aptN={
   },
   hots(){
     const H=[];
+    H.push({x:58,y:42,w:17,h:42,l:"Jaqueta na cadeira",fn:()=>examJaqueta()});
     H.push({x:56,y:28,w:14,h:17,l:"Rádio-gravador do pai",fn:hotRadio});
     H.push({x:0.5,y:50,w:9,h:11,l:"Gaveta da mesinha",done:hasItem("elastico"),fn:()=>{
       if(!hasItem("elastico")){ addItem("elastico"); say("O <em>elástico de dinheiro</em>. Sabia que essa gaveta ainda me devia uma."); refresh();}
