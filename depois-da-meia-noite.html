@@ -460,31 +460,13 @@ const sfx={
 
 /* ---------- RETRATOS (SVG) ---------- */
 function face(id){
-  const base=(skin,hair,extra="",bg="#1a2030")=>`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="${bg}"/>
-    <circle cx="50" cy="44" r="22" fill="${skin}"/>
-    <path d="M22 100 Q50 64 78 100 Z" fill="${hair==="none"?"#2e3850":hair}" opacity="${hair==="none"?1:1}"/>
-    ${extra}</svg>`;
   switch(id){
     case "gabriel": return `<img src="img/gabriel.jpg" alt="Gabriel" style="width:100%;height:100%;object-fit:cover;object-position:50% 18%">`;
     case "tonho": return `<img src="img/tonho.jpg" alt="Tonho" style="width:100%;height:100%;object-fit:cover">`;
     case "marina": return `<img src="img/marina.jpg" alt="Marina" style="width:100%;height:100%;object-fit:cover">`;
-    case "edmilson": return base("#a97950","#3a3a3a",
-      `<path d="M26 34 Q50 18 74 34 L78 38 L24 38 Z" fill="#b8452a"/><rect x="24" y="36" width="54" height="5" fill="#8c2f1c"/>
-       <path d="M38 52 Q50 60 62 52 L62 56 Q50 64 38 56 Z" fill="#4a4a52"/>
-       <circle cx="42" cy="44" r="2.6" fill="#1a1410"/><circle cx="58" cy="44" r="2.6" fill="#1a1410"/>
-       <path d="M22 100 Q50 70 78 100 Z" fill="#7c8894"/><rect x="30" y="86" width="40" height="14" fill="#e8e2d2"/>`,"#1c1410");
-    case "cida": return base("#e0b896","#d8d4cc",
-      `<path d="M26 38 Q50 14 74 38 L72 50 Q50 34 28 50 Z" fill="#d8d4cc"/>
-       <rect x="33" y="40" width="13" height="9" rx="3" fill="none" stroke="#caa14b" stroke-width="2"/>
-       <rect x="54" y="40" width="13" height="9" rx="3" fill="none" stroke="#caa14b" stroke-width="2"/>
-       <line x1="46" y1="44" x2="54" y2="44" stroke="#caa14b" stroke-width="2"/>
-       <path d="M44 56 Q50 60 56 56" stroke="#9a5a44" stroke-width="2" fill="none" stroke-linecap="round"/>
-       <path d="M22 100 Q50 70 78 100 Z" fill="#e7ecef"/>`,"#14201c");
-    case "nilton": return base("#8a6242","#2a2a2a",
-      `<path d="M28 34 Q50 20 72 34 L76 40 L40 40 Z" fill="#2e4866"/>
-       <circle cx="42" cy="45" r="2.6" fill="#16100a"/><circle cx="58" cy="45" r="2.6" fill="#16100a"/>
-       <path d="M43 56 Q50 59 57 56" stroke="#5a3a28" stroke-width="2" fill="none"/>
-       <path d="M22 100 Q50 70 78 100 Z" fill="#caa83a"/>`,"#181a14");
+    case "edmilson": return `<img src="img/edmilson.jpg" alt="Seu Edmilson" style="width:100%;height:100%;object-fit:cover">`;
+    case "cida": return `<img src="img/cida.jpg" alt="Dona Cida" style="width:100%;height:100%;object-fit:cover">`;
+    case "nilton": return `<img src="img/nilton.jpg" alt="Nilton" style="width:100%;height:100%;object-fit:cover">`;
     case "leo": return `<img src="img/leo.jpg" alt="Léo" style="width:100%;height:100%;object-fit:cover">`;
     case "narrador": return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#10141f"/>
        <circle cx="50" cy="50" r="26" fill="none" stroke="#ff4d7d" stroke-width="2" opacity=".8"/>
@@ -1314,18 +1296,9 @@ function phoneMsgs(){
 }
 function phoneStory(){
   S.f.storyVisto=true; addClue("story4");
-  modal("Story marcado — @fa_da_vertice",`
-   <div style="max-width:340px;margin:0 auto;background:#000;border-radius:14px;padding:10px;border:1px solid var(--line)">
-     <svg viewBox="0 0 300 380" style="width:100%;border-radius:8px">
-       <rect width="300" height="380" fill="#120a14"/>
-       <rect x="0" y="250" width="300" height="130" fill="#1a0f1e"/>
-       <circle cx="150" cy="60" r="40" fill="#ff4d7d" opacity=".25"/>
-       <rect x="60" y="120" width="180" height="8" fill="#ff4d7d" opacity=".5"/>
-       <g fill="#0a0610"><ellipse cx="80" cy="330" rx="22" ry="46"/><ellipse cx="150" cy="320" rx="24" ry="52"/><ellipse cx="222" cy="332" rx="22" ry="44"/></g>
-       <g stroke="#ffd9a0" stroke-width="3"><line x1="150" y1="170" x2="150" y2="230"/><line x1="120" y1="190" x2="180" y2="190"/></g>
-       <text x="150" y="290" text-anchor="middle" fill="#ffd9a0" font-size="17" font-family="monospace">CIDADE FANTASMA 🔥</text>
-       <text x="150" y="312" text-anchor="middle" fill="#caa3ff" font-size="13" font-family="monospace">a 4ª do set &gt;&gt;&gt;</text>
-     </svg>
+  modal("Story marcado — @lais.rockon",`
+   <div style="max-width:300px;margin:0 auto;background:#000;border-radius:14px;padding:8px;border:1px solid var(--line)">
+     <img src="img/story.jpg" alt="Story do show da Vértice" style="display:block;width:100%;border-radius:8px">
    </div>
    <p class="dimtxt mt" style="text-align:center">Anotado: \u201CCidade Fantasma\u201D foi a <b>4ª música</b> do show.</p>
    <div class="row mt" style="justify-content:center"><button class="btn ghost" id="backPh">← Voltar</button></div>`);

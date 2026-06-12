@@ -99,5 +99,5 @@ O mesmo quarto do Ato 1, à noite: abajur aceso, luz de poste amarela pela janel
 
 ## Avatares (close de rosto, usados nos diálogos)
 
-Já fotográficos: **Gabriel** (`img/gabriel.jpg` — curativo na sobrancelha, jaqueta de couro) e **Tonho** (`img/tonho.jpg`).
-Ainda em SVG (se quiser fotos): **Marina** (~45-50, cabelo castanho comprido), **Seu Edmilson** (pastel, boné/avental), **Dona Cida** (farmacêutica idosa, óculos), **Nilton** (taxista, boné), **Léo** (ex-baterista, bandana/cabelo raspado).
+Todos fotográficos: **Gabriel** (`img/gabriel.jpg`), **Tonho** (`img/tonho.jpg`), **Marina** (`img/marina.jpg`), **Léo** (`img/leo.jpg`), **Seu Edmilson** (`img/edmilson.jpg`), **Dona Cida** (`img/cida.jpg`), **Nilton** (`img/nilton.jpg`). Só o **Narrador** segue como ícone SVG (relógio).
+Extra: `img/story.jpg` — story do Instagram (@lais.rockon) exibido no celular do Gabriel ("CIDADE FANTASMA · a 4ª do set").
