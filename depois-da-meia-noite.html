@@ -1247,38 +1247,26 @@ function deepPapel(){
 }
 function deepChaveiro(){
   modal("Chaveiro laranja nº 7 — examinar a fundo",`
-   <div class="row" style="align-items:flex-start">
-     <div style="width:120px;flex:0 0 120px">${ICON.chaveiro}</div>
-     <div style="flex:1">
-       <p class="dimtxt mb">Virando a ficha plástica… no verso, gravado a fogo:</p>
-       <div class="ticket">GUARDA-VOLUMES<br><span class="hr"></span>devolver na retirada</div>
-     </div>
-   </div>
+   <div style="text-align:center"><img src="${encodeURI('img/inventory/Chaveiro-verso.png')}" style="max-height:220px;max-width:100%;object-fit:contain"></div>
+   <p class="dimtxt mt">Virando a ficha plástica… no verso, gravado a fogo:</p>
+   <div class="ticket">GUARDA-VOLUMES<br><span class="hr"></span>devolver na retirada</div>
    <div class="row mt"><button class="btn ghost" id="chaveiroBackInv">← Voltar</button></div>`);
   $("#chaveiroBackInv").onclick=openInv;
   addClue("fichagv");
 }
 function deepCurativo(){
   modal("Curativo reserva — examinar a fundo",`
-   <div class="row" style="align-items:flex-start">
-     <div style="width:120px;flex:0 0 120px"><img src="${encodeURI('img/inventory/Curativo-verso.png')}" style="width:100%;object-fit:contain"></div>
-     <div style="flex:1">
-       <p class="dimtxt mb">Virando a embalagem… no verso, carimbado:</p>
-       <p><em>PROTOCOLO B-0247 — FARMA 24H</em></p>
-     </div>
-   </div>
+   <div style="text-align:center"><img src="${encodeURI('img/inventory/Curativo-verso.png')}" style="max-height:220px;max-width:100%;object-fit:contain"></div>
+   <p class="dimtxt mt">Virando a embalagem… no verso, carimbado:</p>
+   <p><em>PROTOCOLO B-0247 — FARMA 24H</em></p>
    <div class="row mt"><button class="btn ghost" id="curativoBackInv">← Voltar</button></div>`);
   $("#curativoBackInv").onclick=openInv;
   addClue("protocolo");
 }
 function deepRecibo(){
   modal("Recibo de táxi — examinar a fundo",`
-   <div class="row" style="align-items:flex-start">
-     <div style="width:120px;flex:0 0 120px"><img src="${encodeURI('img/inventory/Recibo Taxi-borrado.png')}" style="width:100%;object-fit:contain"></div>
-     <div style="flex:1">
-       <p>Bandeira 2. O valor está legível: <em>R$ 38,40</em>, às <em>06h12</em>. A origem, borrada. Mas tarifa é matemática…</p>
-     </div>
-   </div>
+   <div style="text-align:center"><img src="${encodeURI('img/inventory/Recibo Taxi-borrado.png')}" style="max-height:220px;max-width:100%;object-fit:contain"></div>
+   <p class="mt">Bandeira 2. O valor está legível: <em>R$ 38,40</em>, às <em>06h12</em>. A origem, borrada. Mas tarifa é matemática…</p>
    <div class="row mt"><button class="btn ghost" id="reciboBackInv">← Voltar</button></div>`);
   $("#reciboBackInv").onclick=openInv;
   addClue("recibo");
@@ -2037,7 +2025,7 @@ function showCartaMarina(fromInv){
 }
 function deepGuitarra(){
   modal("Giannini 1978 — examinar a fundo",`
-   <div style="text-align:center"><img src="${encodeURI('img/inventory/Palheta.png')}" style="height:120px;object-fit:contain"></div>
+   <div style="text-align:center"><img src="${encodeURI('img/inventory/Palheta.png')}" style="max-height:220px;max-width:100%;object-fit:contain"></div>
    <p>Giro o corpo contra a luz. Nenhum arranhão novo. O verniz gasto onde o braço do meu pai descansava — e onde o meu descansa igual.</p>
    <p class="mt">Atrás da pestana, presa nas cordas… uma <b>palheta que não é minha</b>. Roxa. Com marcas de dente.</p>
    <p class="dimtxt mt">Marina roía palhetas quando estava nervosa. Dez anos atrás. Sempre.</p>
