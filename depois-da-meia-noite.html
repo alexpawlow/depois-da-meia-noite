@@ -147,9 +147,6 @@ body{background:#06080d;color:var(--ink);font-family:var(--sans);overflow:hidden
 .cluerow{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-bottom:1px solid #1d2536;cursor:pointer;border-radius:8px;transition:.12s}
 .cluerow:hover{background:rgba(90,208,197,.05)}
 .cluerow.sel{background:rgba(90,208,197,.12);outline:1px solid var(--teal)}
-.cluerow.used{cursor:default;opacity:.4;filter:grayscale(.6)}
-.cluerow.used:hover{background:none}
-.cluerow.used .dot{color:var(--dim)}
 .cluerow .dot{color:var(--teal);font-size:15px;margin-top:1px}
 .cluerow b{display:block;font-size:13.5px;color:var(--ink)}
 .cluerow span{font-size:12.5px;color:var(--dim);line-height:1.4}
@@ -447,7 +444,7 @@ const S={
     edmilson:false, pastelLamp:false, cidaPediu:false, achouProtocolo:false, farmaciaOk:false,
     taxiOk:false, rodoOpen:false, leuPlaca:false, tentou4125:false, armario:false,
     cartaMarina:false, radioOk:false, demoTocada:false, musica:false, aptNoite:false,
-    plataformaOpen:false, fim:null, usedClues:{}
+    plataformaOpen:false, fim:null
   }
 };
 
@@ -862,7 +859,7 @@ function openCaderno(){
     const key=cadSel.slice().sort().join("+");
     const c=COMBOS[key];
     closeModal();
-    if(c){ cadSel.forEach(id=>S.f.usedClues[id]=true); c.r(); }
+    if(c){ c.r(); }
     else {
       const meh=["Hmm. Junto, separo, e… nada. Próxima.","Essas duas não conversam. Igual eu e o Léo agora.",
         "Se isso fizer sentido, eu como o chaveiro.","Interessante. Inútil, mas interessante."];
@@ -874,12 +871,8 @@ function renderClues(){
   const l=$("#cluelist"); if(!l)return; l.innerHTML="";
   Object.keys(S.clues).forEach(id=>{
     const c=CLUES[id];
-    const used=S.f.usedClues[id];
-    const r=document.createElement("div"); r.className="cluerow"+(cadSel.includes(id)?" sel":"")+(used?" used":"");
+    const r=document.createElement("div"); r.className="cluerow"+(cadSel.includes(id)?" sel":"");
     r.innerHTML=`<span class="dot">◈</span><div><b>${c.n}</b><span>${c.d}</span></div>`;
-    if(used){
-      l.appendChild(r); return;
-    }
     r.onclick=()=>{ sfx.click();
       if(cadSel.includes(id)) cadSel=cadSel.filter(x=>x!==id);
       else { cadSel.push(id); if(cadSel.length>2) cadSel.shift(); }
