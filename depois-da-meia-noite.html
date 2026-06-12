@@ -457,11 +457,7 @@ function face(id){
   switch(id){
     case "gabriel": return `<img src="img/gabriel.jpg" alt="Gabriel" style="width:100%;height:100%;object-fit:cover;object-position:50% 18%">`;
     case "tonho": return `<img src="img/tonho.jpg" alt="Tonho" style="width:100%;height:100%;object-fit:cover">`;
-    case "marina": return base("#d9ab8b","#3a2620",
-      `<path d="M26 36 Q50 12 74 36 L76 62 Q70 50 66 40 Q50 30 34 40 Q30 52 24 62 Z" fill="#3a2620"/>
-       <circle cx="42" cy="45" r="2.6" fill="#241510"/><circle cx="58" cy="45" r="2.6" fill="#241510"/>
-       <path d="M43 55 Q50 60 57 55" stroke="#8a4a3a" stroke-width="2" fill="none" stroke-linecap="round"/>
-       <path d="M22 100 Q50 68 78 100 Z" fill="#4a6ea8"/>`,"#2a1c14");
+    case "marina": return `<img src="img/marina.jpg" alt="Marina" style="width:100%;height:100%;object-fit:cover">`;
     case "edmilson": return base("#a97950","#3a3a3a",
       `<path d="M26 34 Q50 18 74 34 L78 38 L24 38 Z" fill="#b8452a"/><rect x="24" y="36" width="54" height="5" fill="#8c2f1c"/>
        <path d="M38 52 Q50 60 62 52 L62 56 Q50 64 38 56 Z" fill="#4a4a52"/>
@@ -479,12 +475,7 @@ function face(id){
        <circle cx="42" cy="45" r="2.6" fill="#16100a"/><circle cx="58" cy="45" r="2.6" fill="#16100a"/>
        <path d="M43 56 Q50 59 57 56" stroke="#5a3a28" stroke-width="2" fill="none"/>
        <path d="M22 100 Q50 70 78 100 Z" fill="#caa83a"/>`,"#181a14");
-    case "leo": return base("#b88a64","#1e1e26",
-      `<path d="M28 32 Q50 14 72 32 L72 44 Q50 30 28 44 Z" fill="#1e1e26"/>
-       <circle cx="28" cy="44" r="7" fill="#e84d3a"/><circle cx="72" cy="44" r="7" fill="#e84d3a"/>
-       <path d="M28 38 Q50 20 72 38" stroke="#e84d3a" stroke-width="4" fill="none"/>
-       <circle cx="42" cy="45" r="2.6" fill="#16100a"/><circle cx="58" cy="45" r="2.6" fill="#16100a"/>
-       <path d="M22 100 Q50 70 78 100 Z" fill="#33271e"/>`,"#171320");
+    case "leo": return `<img src="img/leo.jpg" alt="Léo" style="width:100%;height:100%;object-fit:cover">`;
     case "narrador": return `<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#10141f"/>
        <circle cx="50" cy="50" r="26" fill="none" stroke="#ff4d7d" stroke-width="2" opacity=".8"/>
        <line x1="50" y1="50" x2="50" y2="32" stroke="#ffb454" stroke-width="2.5" stroke-linecap="round"/>
@@ -982,7 +973,7 @@ const SCENE_ART={
   aptN:{src:"img/aptN.jpg"},
   bar :{src:"img/bar.jpg"},
   rua :{src:"img/rua.jpg"},
-  rodo:{src:"img/rodo.jpg",filter:"brightness(.6) saturate(.8) contrast(1.05)"}, // foto diurna → 21h40
+  rodo:{src:"img/rodo.jpg"},
   plat:{src:"img/plat.jpg"}
 };
 const PARA={x:0,y:0,tx:0,ty:0,started:false};
@@ -1056,57 +1047,57 @@ SCENES.apt={
   }},
   hots(){
     const H=[];
-    H.push({x:1,y:42,w:24,h:54,l:"Cama desfeita",fn:()=>{
+    H.push({x:11,y:36,w:24,h:36,l:"Cama desfeita",fn:()=>{
       say("Dormi <em>vestido</em>. De jaqueta e sapatos. O travesseiro tem uma marca de… curativo?");
     }});
-    H.push({x:50,y:74,w:15,h:23,l:"Sapatos",done:hasClue("barro"),fn:()=>{
+    H.push({x:33,y:66,w:15,h:21,l:"Sapatos",done:hasClue("barro"),fn:()=>{
       say("Barro <em>vermelho</em> na sola. Não chove há dias perto do bar… esse barro veio de outro canto da cidade.");
       addClue("barro");
     }});
-    H.push({x:22,y:60,w:11,h:14,l:"Calça de ontem",done:hasItem("recibo"),fn:()=>{
+    H.push({x:12,y:66,w:20,h:22,l:"Calça de ontem",done:hasItem("recibo"),fn:()=>{
       if(!hasItem("recibo")){ say("No bolso da calça: um <em>recibo de táxi</em> amassado. R$ 38,40 — 06h12. A origem está borrada.");
         addItem("recibo"); addClue("recibo"); }
       else say("A calça já me contou o que sabia.");
     }});
-    H.push({x:34,y:36,w:12,h:33,l:"Jaqueta na cadeira",fn:()=>examJaqueta()});
-    H.push({x:84,y:62,w:6,h:7,l:"Celular (2%)",fn:()=>hotCelular()});
-    H.push({x:88,y:14,w:11,h:40,l:"Espelho",done:hasClue("curativo")&&hasClue("sangue"),fn:()=>{
+    H.push({x:58,y:42,w:17,h:42,l:"Jaqueta na cadeira",fn:()=>examJaqueta()});
+    H.push({x:8.5,y:44,w:5,h:8,l:"Celular (2%)",fn:()=>hotCelular()});
+    H.push({x:50,y:8,w:7,h:35,l:"Espelho",done:hasClue("curativo")&&hasClue("sangue"),fn:()=>{
       dialog([
         {w:"gabriel",t:"Um corte acima da sobrancelha esquerda. Fechado com um <em>curativo borboleta</em> — perfeito, simétrico. Eu não sei fazer isso nem sóbrio."},
         {w:"gabriel",t:"E no punho da camisa… uma <em>mancha de sangue</em>. Pequena. Seca. Minha…? De outra pessoa…?"}
       ],()=>{addClue("curativo");addClue("sangue");});
     }});
-    H.push({x:93,y:58,w:6,h:9,l:"Chaves na porta",done:hasClue("chaves"),fn:()=>{
+    H.push({x:88.5,y:36,w:4,h:11,l:"Chaves na porta",done:hasClue("chaves"),fn:()=>{
       say("As chaves estão penduradas <em>por dentro</em>. Se eu tranquei… quem trancou? Alguém me ajudou a entrar?");
       addClue("chaves");
     }});
-    H.push({x:57,y:3,w:7,h:12,l:"Suporte vazio na parede",done:hasClue("suporte"),fn:()=>{
+    H.push({x:40,y:9,w:7,h:23,l:"Suporte vazio na parede",done:hasClue("suporte"),fn:()=>{
       dialog([
         {w:"gabriel",t:"…"},
         {w:"gabriel",t:"A parede. O suporte. <em>A Giannini 1978 do meu pai não está aqui.</em>"},
         {w:"gabriel",t:"Só sobrou a silhueta de poeira no formato dela. Meu estômago acabou de descer três andares."}
       ],()=>addClue("suporte"));
     }});
-    H.push({x:85,y:0,w:13,h:9,l:"Caixa de cartas antigas",done:S.f.cartaAntiga,fn:()=>{
+    H.push({x:76,y:14,w:10,h:13,l:"Caixa de cartas antigas",done:S.f.cartaAntiga,fn:()=>{
       if(!S.f.cartaAntiga) showCartaAntiga(false); else say("A caixa de correspondências. Dez anos de coisas não ditas.");
     }});
-    H.push({x:63,y:47,w:14,h:31,l:"Geladeira",done:S.f.sawFridge,fn:()=>{
+    H.push({x:75,y:43,w:13,h:24,l:"Geladeira",done:S.f.sawFridge,fn:()=>{
       say("Na porta da geladeira, uma foto do <em>primeiro show da Vértice</em>. No bumbo, o logo da banda: um \u201CV\u201D atravessado — começa em cima à esquerda, desce até o meio, sobe para a direita.");
       S.f.sawFridge=true; refresh();
     }});
-    H.push({x:15,y:54,w:10,h:11,l:"Gaveta da mesinha",done:hasItem("carregpilha")&&hasItem("elastico")||S.f.chargerMade&&hasItem("elastico"),fn:()=>{
+    H.push({x:0.5,y:51,w:9,h:10,l:"Gaveta da mesinha",done:hasItem("carregpilha")&&hasItem("elastico")||S.f.chargerMade&&hasItem("elastico"),fn:()=>{
       let got=[];
       if(!hasItem("carregpilha")&&!S.f.chargerMade){addItem("carregpilha");got.push("um <em>carregador de pilhas</em> com porta USB");}
       if(!hasItem("elastico")){addItem("elastico");got.push("um <em>elástico de dinheiro</em>");}
       say(got.length?`A gaveta-de-tudo. Encontrei ${got.join(" e ")}. O resto: três pilhas mortas e um manual de micro-ondas que não tenho mais.`:"A gaveta-de-tudo, agora gaveta-de-quase-nada.");
       refresh();
     }});
-    H.push({x:77,y:59,w:7,h:8,l:"Controle de videogame",done:hasItem("cabo")||S.f.chargerMade,fn:()=>{
+    H.push({x:77,y:82,w:12,h:15,l:"Controle de videogame",done:hasItem("cabo")||S.f.chargerMade,fn:()=>{
       if(!hasItem("cabo")&&!S.f.chargerMade){ addItem("cabo");
         say("O controle dorme no sofá com o <em>cabo USB</em> comprido. \u201CTudo nessa casa carrega no mesmo cabo, menos o que importa.\u201D"); refresh();}
       else say("O controle, agora sem cabo, me julga em silêncio.");
     }});
-    H.push({x:96.5,y:30,w:3.5,h:50,l:"Porta — sair",fn:()=>{
+    H.push({x:93,y:8,w:7,h:70,l:"Porta — sair",fn:()=>{
       if(!S.f.barOpen){
         if(!S.f.audioFixed){ say("Sair para onde? Sem carteira, sem memória… Preciso de um <em>fio</em> para puxar. O celular é o começo."); return;}
       }
@@ -1392,22 +1383,22 @@ SCENES.bar={
   },
   hots(){
     const H=[];
-    H.push({x:60,y:16,w:19,h:47,l:"Tonho",fn:talkTonho});
-    H.push({x:14,y:80,w:10,h:16,l:"Lixeira",done:S.f.contaPaga,fn:()=>{
+    H.push({x:6,y:8,w:14,h:38,l:"Tonho",fn:talkTonho});
+    H.push({x:22,y:67,w:17,h:31,l:"Lixeira",done:S.f.contaPaga,fn:()=>{
       if(S.f.contaPaga){ say("Já revirei lixo o suficiente para uma vida."); return;}
       puzzleCupom();
     }});
-    H.push({x:0,y:14,w:22,h:48,l:"Palco e setlist",done:S.f.setlist,fn:()=>{
+    H.push({x:61,y:18,w:34,h:33,l:"Palco e setlist",done:S.f.setlist,fn:()=>{
       if(!S.f.contaPaga){ say("O Tonho me olha como segurança de shopping. Melhor resolver a <em>conta</em> antes de fuçar no palco."); return;}
       if(S.f.setlist){ say("O palco vazio. Ontem ele estava cheio de futuro."); return;}
       puzzleSetlist();
     }});
-    H.push({x:85,y:36,w:14,h:27,l:"Jukebox",fn:()=>{
+    H.push({x:37,y:23,w:10,h:21,l:"Jukebox",fn:()=>{
       if(!S.f.contaPaga){ say("A jukebox pisca. O Tonho pisca de volta: <em>\u201Cprimeiro a conta\u201D</em>."); return;}
       if(S.f.setlist){ say("A jukebox descansa. Fez seu trabalho de máquina do tempo."); return;}
       puzzleSetlist();
     }});
-    if(S.f.setlist&&!S.f.chaveiro) H.push({x:47,y:52,w:6,h:8,l:"Chaveiro esquecido",fn:()=>{
+    if(S.f.setlist&&!S.f.chaveiro) H.push({x:7,y:50,w:7,h:6,l:"Chaveiro esquecido",fn:()=>{
       S.f.chaveiro=true; addItem("chaveiro");
       dialog([
         {w:"tonho",t:"Ih, é. Esse chaveiro laranja apareceu no balcão de madrugada. A moça da jaqueta jeans esqueceu? Ou era seu?"},
@@ -1415,7 +1406,7 @@ SCENES.bar={
         {w:"tonho",t:"Vocês dois trocando chaveiro sem perceber. Dez anos se passam e ninguém aprende nada."},
       ],()=>refresh());
     }});
-    H.push({x:0,y:88,w:12,h:11,l:"Sair do bar",fn:openMap});
+    H.push({x:48,y:7,w:11,h:40,l:"Sair do bar",fn:openMap});
     return H;
   }
 };
@@ -1587,10 +1578,10 @@ SCENES.rua={
   },
   hots(){
     const H=[];
-    H.push({x:1,y:14,w:37,h:78,l:"Food truck — Seu Edmilson",fn:talkEdmilson});
-    H.push({x:42,y:22,w:16,h:55,l:"Farmácia 24h — Dona Cida",fn:talkCida});
-    H.push({x:67,y:22,w:31,h:62,l:"Ponto de táxi",fn:hotTaxi});
-    H.push({x:0,y:88,w:12,h:11,l:"Ir para…",fn:openMap});
+    H.push({x:0,y:17,w:30,h:60,l:"Food truck — Seu Edmilson",fn:talkEdmilson});
+    H.push({x:39,y:21,w:23,h:53,l:"Farmácia 24h — Dona Cida",fn:talkCida});
+    H.push({x:61,y:28,w:25,h:45,l:"Ponto de táxi",fn:hotTaxi});
+    H.push({x:88,y:55,w:12,h:35,l:"Ir para…",fn:openMap});
     return H;
   }
 };
@@ -1764,13 +1755,13 @@ SCENES.rodo={
   },
   hots(){
     const H=[];
-    H.push({x:16,y:78,w:26,h:19,l:"Canteiro (barro vermelho)",done:S.f._barroOk,fn:()=>{
+    H.push({x:50,y:55,w:30,h:35,l:"Canteiro (barro vermelho)",done:S.f._barroOk,fn:()=>{
       S.f._barroOk=true;
       say("Ajoelho e comparo: o barro do canteiro é <em>idêntico</em> ao da minha sola. E há marcas de arrasto… alguém saiu daqui <em>amparado</em>.");
       refresh();
     }});
-    H.push({x:0,y:28,w:9,h:32,l:"Guarda-volumes — armário 7",fn:hotArmario});
-    H.push({x:12,y:42,w:5,h:9,l:"Placa de instruções",done:S.f.leuPlaca,fn:()=>{
+    H.push({x:0,y:13,w:25,h:58,l:"Guarda-volumes — armário 7",fn:hotArmario});
+    H.push({x:26,y:20,w:8,h:27,l:"Placa de instruções",done:S.f.leuPlaca,fn:()=>{
       S.f.leuPlaca=true; addClue("placa");
       modal("COMO ABRIR SEU ARMÁRIO",`
        <div class="paper">
@@ -1782,17 +1773,17 @@ SCENES.rodo={
        <div class="row mt"><button class="btn" onclick="closeModal()">\u201CDois números. Não quatro dígitos.\u201D</button></div>`);
       refresh();
     }});
-    H.push({x:0,y:62,w:12,h:17,l:"Banco de metal",done:!!S.lamps.banco,fn:()=>{
+    H.push({x:35,y:47,w:24,h:21,l:"Banco de metal",done:!!S.lamps.banco,fn:()=>{
       if(S.lamps.banco){ say("O banco mais frio e mais importante da minha vida."); return; }
       dialog([
         {w:"gabriel",t:"Sento no banco. Frio de metal de madrugada, mesmo agora à noite."},
         {w:"narrador",t:"E o corpo lembra antes da mente: o anúncio da plataforma, o peso do sono, a voz dela cada vez mais longe…"},
       ],()=>{ unlockLamp("banco"); refresh(); });
     }});
-    H.push({x:23,y:39,w:7,h:8,l:"Painel de partidas",fn:()=>{
+    H.push({x:36,y:9,w:29,h:29,l:"Painel de partidas",fn:()=>{
       say("\u201CDOM 07h00 — LITORAL NORTE — <em>PLATAFORMA 12</em> — CONFIRMADO.\u201D O relógio invisível da minha vida, em LED verde.");
     }});
-    H.push({x:88,y:88,w:12,h:11,l:"Ir para…",fn:openMap});
+    H.push({x:85,y:28,w:15,h:48,l:"Ir para…",fn:openMap});
     return H;
   }
 };
@@ -1921,16 +1912,16 @@ SCENES.aptN={
   },
   hots(){
     const H=[];
-    H.push({x:62,y:64,w:13,h:17,l:"Rádio-gravador do pai",fn:hotRadio});
-    H.push({x:14,y:50,w:10,h:13,l:"Gaveta da mesinha",done:hasItem("elastico"),fn:()=>{
+    H.push({x:56,y:28,w:14,h:17,l:"Rádio-gravador do pai",fn:hotRadio});
+    H.push({x:0.5,y:50,w:9,h:11,l:"Gaveta da mesinha",done:hasItem("elastico"),fn:()=>{
       if(!hasItem("elastico")){ addItem("elastico"); say("O <em>elástico de dinheiro</em>. Sabia que essa gaveta ainda me devia uma."); refresh();}
       else say("A gaveta-de-tudo já deu tudo.");
     }});
-    H.push({x:60,y:40,w:10,h:9,l:"Caixa de cartas antigas",done:S.f.cartaAntiga,fn:()=>{
+    H.push({x:76,y:14,w:10,h:13,l:"Caixa de cartas antigas",done:S.f.cartaAntiga,fn:()=>{
       if(!S.f.cartaAntiga) showCartaAntiga(false);
       else say("A carta de dez anos atrás. Lida, enfim. Tarde, mas lida.");
     }});
-    H.push({x:0,y:48,w:30,h:50,l:"Cama",fn:()=>{
+    H.push({x:11,y:36,w:23,h:35,l:"Cama",fn:()=>{
       dialog([
         {w:"gabriel",t:"A cama me chama. Eu podia simplesmente… dormir. Acordar segunda. Fingir que essa noite não existiu — <em>de novo</em>.",
          choices:[
@@ -1939,7 +1930,7 @@ SCENES.aptN={
          ]}
       ]);
     }});
-    H.push({x:96.5,y:30,w:3.5,h:50,l:"Porta — sair",fn:openMap});
+    H.push({x:93,y:8,w:7,h:70,l:"Porta — sair",fn:openMap});
     return H;
   }
 };
