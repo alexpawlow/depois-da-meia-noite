@@ -777,6 +777,15 @@ function tryCombine(a,b){
     say("O cabo do controle encaixa na porta USB do carregador de pilhas. <em>Engenharia de ressaca: aprovada.</em>");
     sfx.ok(); openInv(); return;
   }
+  if(pair==="carregador+celular"){
+    if(S.f.phoneCharged){ say("O celular já está carregado."); openInv(); return; }
+    sfx.ok(); closeModal();
+    dialog([
+      {w:"gabriel",t:"Cabo do controle + carregador de pilhas = <em>gambiarra premiada</em>. Carregando!"},
+      {w:"gabriel",t:"Agora… o desbloqueio. Que eu aparentemente <em>troquei</em> de madrugada. Bêbado. Por quê, Gabriel do passado, POR QUÊ?"}
+    ],()=>{ S.f.phoneCharged=true; puzzlePattern(); });
+    return;
+  }
   const jokes={
     "celular+guitarra":"Plugar o celular na guitarra? Eu não estou nesse nível de produtor musical.",
     "carteira+recibo":"O recibo cabe na carteira. Revolucionário. Próxima ideia.",
