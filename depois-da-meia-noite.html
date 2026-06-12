@@ -592,9 +592,9 @@ const ITEMS={
   carregador:{n:"Carregador improvisado",d:"Cabo do controle + carregador de pilhas. Engenharia de ressaca."},
   carteira:{n:"Carteira",d:"De volta ao bolso. Sem dinheiro — mas com história."},
   chaveiro:{n:"Chaveiro laranja nº 7",d:"Ficha plástica laranja, número 7, logotipo \u201CR. CENTRAL\u201D.",deep:()=>deepChaveiro()},
-  curativo:{n:"Curativo reserva",d:"Estava no bolso interno da jaqueta. No verso, um número de protocolo: B-0247.",deep:()=>{say("No verso da embalagem, carimbado: <em>PROTOCOLO B-0247 — FARMA 24H</em>.");addClue("protocolo");}},
+  curativo:{n:"Curativo reserva",d:"Estava no bolso interno da jaqueta.",deep:()=>deepCurativo()},
   cupomfarm:{n:"Cupom da farmácia",d:"02h47 — antisséptico, curativo borboleta, analgésico. Pago em moedas."},
-  recibo:{n:"Recibo de táxi",d:"R$ 38,40 — 06h12. O endereço de origem está borrado.",deep:()=>{say("Bandeira 2. O valor está legível: <em>R$ 38,40</em>, às <em>06h12</em>. A origem, borrada. Mas tarifa é matemática…");addClue("recibo");}},
+  recibo:{n:"Recibo de táxi",d:"R$ 38,40 — 06h12. O endereço de origem está borrado.",deep:()=>deepRecibo()},
   guitarra:{n:"Giannini 1978",d:"A guitarra do meu pai. Intacta. Cheirando a madeira e a noite.",deep:()=>deepGuitarra()},
   carta:{n:"Carta de Marina",d:"\u201CSe você decifrou este bilhete, ainda dá tempo.\u201D",deep:()=>showCartaMarina(true)},
   cartaAntiga:{n:"Carta antiga (10 anos)",d:"A carta que eu nunca respondi. O selo ainda dói.",deep:()=>showCartaAntiga(true)},
@@ -1257,6 +1257,31 @@ function deepChaveiro(){
    <div class="row mt"><button class="btn ghost" id="chaveiroBackInv">← Voltar</button></div>`);
   $("#chaveiroBackInv").onclick=openInv;
   addClue("fichagv");
+}
+function deepCurativo(){
+  modal("Curativo reserva — examinar a fundo",`
+   <div class="row" style="align-items:flex-start">
+     <div style="width:120px;flex:0 0 120px"><img src="${encodeURI('img/inventory/Curativo-verso.png')}" style="width:100%;object-fit:contain"></div>
+     <div style="flex:1">
+       <p class="dimtxt mb">Virando a embalagem… no verso, carimbado:</p>
+       <p><em>PROTOCOLO B-0247 — FARMA 24H</em></p>
+     </div>
+   </div>
+   <div class="row mt"><button class="btn ghost" id="curativoBackInv">← Voltar</button></div>`);
+  $("#curativoBackInv").onclick=openInv;
+  addClue("protocolo");
+}
+function deepRecibo(){
+  modal("Recibo de táxi — examinar a fundo",`
+   <div class="row" style="align-items:flex-start">
+     <div style="width:120px;flex:0 0 120px"><img src="${encodeURI('img/inventory/Recibo Taxi-borrado.png')}" style="width:100%;object-fit:contain"></div>
+     <div style="flex:1">
+       <p>Bandeira 2. O valor está legível: <em>R$ 38,40</em>, às <em>06h12</em>. A origem, borrada. Mas tarifa é matemática…</p>
+     </div>
+   </div>
+   <div class="row mt"><button class="btn ghost" id="reciboBackInv">← Voltar</button></div>`);
+  $("#reciboBackInv").onclick=openInv;
+  addClue("recibo");
 }
 function showCartaAntiga(fromInv){
   modal("Uma carta de dez anos atrás",`
@@ -2007,12 +2032,12 @@ function showCartaMarina(fromInv){
       ],()=>{ S.f.aptNoite=true; S.f.plataformaOpen=true;
         toast("🗺️ <b>Apartamento (noite)</b> e <b>Plataforma 12 (domingo, 7h)</b> no mapa");
         say("O relógio invisível ficou visível: <em>domingo, 7h, plataforma 12</em>."); });
-    }
+    } else if(fromInv){ openInv(); }
   };
 }
 function deepGuitarra(){
   modal("Giannini 1978 — examinar a fundo",`
-   <div style="text-align:center">${ICON.guitarra.replace('viewBox="0 0 60 60"','viewBox="0 0 60 60" style="height:120px"')}</div>
+   <div style="text-align:center"><img src="${encodeURI('img/inventory/Palheta.png')}" style="height:120px;object-fit:contain"></div>
    <p>Giro o corpo contra a luz. Nenhum arranhão novo. O verniz gasto onde o braço do meu pai descansava — e onde o meu descansa igual.</p>
    <p class="mt">Atrás da pestana, presa nas cordas… uma <b>palheta que não é minha</b>. Roxa. Com marcas de dente.</p>
    <p class="dimtxt mt">Marina roía palhetas quando estava nervosa. Dez anos atrás. Sempre.</p>
@@ -2023,8 +2048,8 @@ function deepGuitarra(){
       dialog([
         {w:"narrador",t:"A palheta entre os dedos — e a madrugada volta inteira: ele empurrando a guitarra contra o peito dela, três vezes."},
         {w:"marina",t:"\u201CNão. NÃO, Gabriel. Essa guitarra não é minha. Para de tentar se livrar do que você ama.\u201D"},
-      ],()=>unlockLamp("presente"));
-    } else say("A palheta roxa. Guardada no bolso de cima, perto de onde dói bom.");
+      ],()=>{unlockLamp("presente"); openInv();});
+    } else { say("A palheta roxa. Guardada no bolso de cima, perto de onde dói bom."); openInv(); }
   };
 }
 
