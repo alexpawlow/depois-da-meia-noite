@@ -32,6 +32,7 @@ body{background:#06080d;color:var(--ink);font-family:var(--sans);overflow:hidden
 .hbtn:hover{border-color:var(--neon);color:#fff;transform:translateY(-1px)}
 .hbtn .badge{background:var(--neon);color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;font-family:var(--mono)}
 .hbtn.pulse{animation:pulse 1.6s infinite}
+.hbtn.off{opacity:.5}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,125,.45)}50%{box-shadow:0 0 0 7px rgba(255,77,125,0)}}
 /* ---------- STAGE ---------- */
 #stagewrap{flex:1;position:relative;display:flex;align-items:center;justify-content:center;background:#06080d;overflow:hidden}
@@ -209,6 +210,9 @@ body{background:#06080d;color:var(--ink);font-family:var(--sans);overflow:hidden
 .opt.checked{border-color:var(--teal);background:rgba(90,208,197,.08)}
 .opt.locked{opacity:.4;cursor:default;filter:grayscale(.6)}
 .opt.locked:hover{border-color:var(--line)}
+.maphot{position:absolute;border-radius:5px;cursor:pointer;outline:2px solid transparent;transition:.15s}
+.maphot:hover{outline-color:var(--warm);box-shadow:0 0 18px rgba(255,180,84,.5)}
+.maphot.locked{cursor:default;pointer-events:none;backdrop-filter:grayscale(1) brightness(.5);-webkit-backdrop-filter:grayscale(1) brightness(.5)}
 input[type=text],input[type=number]{background:#0a0d14;border:1px solid var(--line);color:var(--ink);font-family:var(--mono);
   font-size:16px;padding:9px 13px;border-radius:8px;width:160px;text-align:center;letter-spacing:2px}
 input:focus{outline:none;border-color:var(--warm)}
@@ -255,6 +259,7 @@ input:focus{outline:none;border-color:var(--warm)}
     <button class="hbtn" id="bMem">🕛 Memórias <span class="badge" id="nMem">0/12</span></button>
     <button class="hbtn" id="bScore">🏆 Hall da Fama</button>
     <button class="hbtn" id="bMap" style="display:none">🗺️ Ir para…</button>
+    <button class="hbtn" id="bMusic" title="Ativar/desativar música">🔊 Música</button>
     <button class="hbtn" id="bExit" title="Voltar à tela inicial">⏻ Sair</button>
   </header>
   <div id="stagewrap">
@@ -278,6 +283,7 @@ input:focus{outline:none;border-color:var(--warm)}
   <div id="mbody"></div>
 </div></div>
 <div id="toasts"></div>
+<audio id="bgm" src="audio/theme.mp3" loop preload="auto"></audio>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
@@ -950,7 +956,8 @@ function openMap(){
     {id:"rodo",n:"Rodoviária Central",t:"SÁB · 21H40",on:S.f.rodoOpen,ic:"🚌"},
     {id:"plat",n:"Plataforma 12 — DOMINGO, 7h",t:"DOM · 06H52",on:S.f.plataformaOpen,ic:"🌅"}
   ];
-  let html=`<p class="dimtxt mb">Para onde Gabriel vai agora?</p>`;
+  let html=`<p class="dimtxt mb">Para onde Gabriel vai agora?</p>
+   <button class="btn ghost mb" id="viewMapBtn">🗺️ Ver mapa</button>`;
   locs.forEach(L=>{
     if(L.on){
       html+=`<button class="opt" data-go="${L.id}"><b>${L.ic} ${L.n}</b> <span class="dimtxt" style="float:right">${L.t}</span></button>`;
@@ -962,10 +969,42 @@ function openMap(){
     html+=`<p class="dimtxt mt">O ônibus dela é <b>amanhã às 7h</b>. Quando eu estiver pronto… ou quando o tempo acabar.</p>`;
   }
   modal("Ir para…",html,"mapa da cidade");
+  $("#viewMapBtn").onclick=()=>{sfx.click(); openMapImage();};
   $$("#mbody [data-go]").forEach(b=>b.onclick=()=>{
     const id=b.dataset.go; closeModal();
     if(id==="plat"){ confirmPlataforma(); return; }
     travel(id);
+  });
+}
+const MAP_SPOTS=[
+  {id:"apt", x:19,   y:12, w:16.5, h:26,   on:()=>true},
+  {id:"bar", x:42.5, y:10, w:17.5, h:26.5, on:()=>S.f.barOpen},
+  {id:"rua", x:71,   y:12, w:18.5, h:26,   on:()=>S.f.ruaOpen},
+  {id:"aptN",x:22,   y:49, w:17.5, h:26,   on:()=>S.f.aptNoite},
+  {id:"rodo",x:63.5, y:51, w:17.5, h:26.5, on:()=>S.f.rodoOpen},
+  {id:"plat",x:37.5, y:72, w:23,   h:24,   on:()=>S.f.plataformaOpen}
+];
+function openMapImage(){
+  const html=`
+   <div style="position:relative;max-width:680px;margin:0 auto">
+     <img src="img/mapa.jpg" alt="Mapa dos lugares" style="display:block;width:100%;border-radius:6px">
+     ${MAP_SPOTS.map(L=>{
+       const unlocked=L.on();
+       return `<div class="maphot${unlocked?"":" locked"}" data-go="${L.id}"
+         style="left:${L.x}%;top:${L.y}%;width:${L.w}%;height:${L.h}%"></div>`;
+     }).join("")}
+   </div>
+   <div class="row mt"><button class="btn ghost" id="backMapList">← Voltar</button></div>`;
+  modal("Mapa dos lugares",html,"clique num local liberado para ir até ele");
+  $("#backMapList").onclick=()=>{sfx.click(); openMap();};
+  $$("#mbody .maphot").forEach(d=>{
+    if(d.classList.contains("locked")) return;
+    d.onclick=()=>{
+      sfx.click(); closeModal();
+      const id=d.dataset.go==="aptN"?"apt":d.dataset.go;
+      if(id==="plat"){ confirmPlataforma(); return; }
+      travel(id);
+    };
   });
 }
 function travel(id){
@@ -2239,7 +2278,30 @@ function hideTitle(){
   const t=$("#title");
   t.style.transition="opacity .8s"; t.style.opacity=0;
   setTimeout(()=>{ t.style.display="none"; },800);
+  playMusic();
 }
+
+/* ---------- TRILHA SONORA ---------- */
+let musicOn=localStorage.getItem("dmn_music")!=="off";
+function setMusicBtn(){
+  const b=$("#bMusic");
+  b.textContent=musicOn?"🔊 Música":"🔇 Música";
+  b.classList.toggle("off",!musicOn);
+}
+function playMusic(){
+  if(!musicOn) return;
+  const a=$("#bgm"); a.volume=0.18;
+  a.play().catch(()=>{});
+}
+function pauseMusic(){ $("#bgm").pause(); }
+setMusicBtn();
+$("#bMusic").onclick=()=>{
+  sfx.click();
+  musicOn=!musicOn; localStorage.setItem("dmn_music",musicOn?"on":"off");
+  if(musicOn) playMusic(); else pauseMusic();
+  setMusicBtn();
+};
+
 $("#startBtn").onclick=()=>{
   ac(); sfx.ok();
   hideTitle();
@@ -2261,6 +2323,7 @@ $("#startBtn").onclick=()=>{
 let restartArmed=false;
 $("#bExit").onclick=()=>{
   sfx.click();
+  pauseMusic();
   restartArmed=false;
   $("#btnRestart").textContent="↺ Reiniciar"; $("#btnRestart").disabled=false;
   $("#startBtn").style.display="none";

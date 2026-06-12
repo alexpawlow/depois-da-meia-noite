@@ -19,4 +19,5 @@ const out = html.replace(
 mkdirSync('dist', { recursive: true })
 writeFileSync('dist/index.html', out)
 cpSync('img', 'dist/img', { recursive: true })
-console.log('Build ok →', 'dist/index.html (+ img/)')
+cpSync('audio', 'dist/audio', { recursive: true })
+console.log('Build ok →', 'dist/index.html (+ img/ + audio/)')
