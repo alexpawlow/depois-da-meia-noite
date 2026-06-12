@@ -1,5 +1,11 @@
 # Briefing de cenários — itens clicáveis por ato
 
+> Status: todas as cenas abaixo estão **implementadas e com hotspots
+> posicionados** em `depois-da-meia-noite.html`. Este documento permanece como
+> referência de arte/composição de cada cenário. Para o estado geral da
+> implementação (puzzles, itens, pistas, etc.), ver
+> [`STATUS-IMPLEMENTACAO.md`](STATUS-IMPLEMENTACAO.md).
+
 Formato das imagens: **16:9** (ideal 1920×1080+), plano aberto (wide shot), estilo fotográfico cinematográfico consistente.
 Regras gerais:
 - Cada item clicável precisa estar **visível e separado** dos demais (sem sobreposição), com tamanho razoável no quadro.
@@ -62,7 +68,9 @@ Esquina de bairro brasileiro ao pôr do sol, asfalto molhado. Três "estações"
 
 ## ATO 4 — Rodoviária Central (noite) · SÁB 21h40 · `img/rodo.jpg`
 
-**Saguão interno** de rodoviária à noite, luz fluorescente fria, meio vazio. ⚠️ A imagem atual (ônibus na plataforma, dia) não mostra vários itens — esta é a cena que mais precisa de imagem nova.
+**Saguão interno** de rodoviária à noite, luz fluorescente fria, meio vazio.
+(Arte atualizada no passe "rodoviária e plataforma" — placas azuis, ônibus
+cinza.)
 
 **6 itens clicáveis:**
 1. **Guarda-volumes — armário 7** — parede de **armários metálicos de guarda-volumes**, com o de número **7** em evidência (puzzle do cadeado).
@@ -101,3 +109,33 @@ O mesmo quarto do Ato 1, à noite: abajur aceso, luz de poste amarela pela janel
 
 Todos fotográficos: **Gabriel** (`img/gabriel.jpg`), **Tonho** (`img/tonho.jpg`), **Marina** (`img/marina.jpg`), **Léo** (`img/leo.jpg`), **Seu Edmilson** (`img/edmilson.jpg`), **Dona Cida** (`img/cida.jpg`), **Nilton** (`img/nilton.jpg`), **Caio** (`img/caio.jpg` — ex da Marina; aparece como "O homem de boné" no flashback da reconstituição com Edmilson e é nomeado pela Marina no Final A). Só o **Narrador** segue como ícone SVG (relógio).
 Extra: `img/story.jpg` — story do Instagram (@lais.rockon) exibido no celular do Gabriel ("CIDADE FANTASMA · a 4ª do set").
+
+---
+
+## Mapa da cidade — tela "Ver mapa" · `img/mapa.jpg`
+
+Mapa ilustrado estilo "mapa do tesouro", com 6 fotos de local distribuídas
+sobre o desenho da cidade (uma para cada cenário: Apartamento, Bar Subsolo, O
+Quarteirão, Rodoviária Central, Apartamento à noite, Plataforma 12).
+
+- Acessado pelo botão "🗺️ Ver mapa" dentro do menu "Ir para…" (disponível após
+  liberar o Bar Subsolo).
+- Cada foto tem uma área clicável (`MAP_SPOTS`/`.maphot`) sobre o mapa:
+  - **Local já liberado** (de acordo com as flags de progresso): foto em
+    destaque, clicável, com contorno dourado no hover → viaja para o local
+    (`travel(id)` / `confirmPlataforma()` para a Plataforma 12).
+  - **Local ainda bloqueado**: foto em escala de cinza/escurecida, sem clique.
+- Composição sugerida: vista aérea estilizada da cidade à noite, com as 6
+  fotos posicionadas como "marcadores" sobre pontos do mapa, conectados por
+  linhas tracejadas (estilo trajeto), mantendo o tom cinematográfico/noturno
+  do restante da arte.
+
+---
+
+## Trilha sonora — `audio/theme.mp3`
+
+Música instrumental de fundo, em loop, volume baixo (tema "lento, misterioso,
+clássico rock/blues cinematográfico"). Tocada continuamente a partir da tela
+de título, com botão "🔊/🔇 Música" no HUD para ligar/desligar (preferência
+salva). Não é um asset de imagem, mas faz parte do pacote de mídia do jogo
+junto com `img/`.

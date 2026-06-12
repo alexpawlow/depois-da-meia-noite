@@ -347,7 +347,7 @@ async function dbSave(){
       slots: S.slots,
       flags: S.f,
       act_reached: getActNumber()
-    }, { merge: true });
+    });
   }catch(e){ console.warn('dbSave falhou', e); }
 }
 
@@ -363,6 +363,8 @@ async function dbLoad(){
     if(data.slots) S.slots = data.slots;
     Object.assign(S.f, data.flags||{});
     S.scene = data.scene;
+    // limpa saves antigos corrompidos: itens já combinados não devem reaparecer
+    if(S.f.chargerMade){ delete S.inv.cabo; delete S.inv.carregpilha; }
     return data.scene;
   }catch(e){ console.warn('dbLoad falhou', e); return false; }
 }
