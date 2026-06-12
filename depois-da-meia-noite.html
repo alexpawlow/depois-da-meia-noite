@@ -35,8 +35,7 @@ body{background:#06080d;color:var(--ink);font-family:var(--sans);overflow:hidden
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,125,.45)}50%{box-shadow:0 0 0 7px rgba(255,77,125,0)}}
 /* ---------- STAGE ---------- */
 #stagewrap{flex:1;position:relative;display:flex;align-items:center;justify-content:center;background:#06080d;overflow:hidden}
-#stage{position:relative;aspect-ratio:16/9;width:100%;max-width:calc((100vh - 150px)*16/9);max-height:calc(100vh - 150px);
-  background:#000;border-radius:4px;box-shadow:0 0 80px rgba(0,0,0,.8)}
+#stage{position:relative;width:100%;height:100%;background:#000;overflow:hidden}
 #scene{position:absolute;inset:0}
 #scene svg{width:100%;height:100%;display:block}
 #hotspots{position:absolute;inset:0}
@@ -179,7 +178,7 @@ body{background:#06080d;color:var(--ink);font-family:var(--sans);overflow:hidden
 .kbd{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:22px}
 
 /* ---------- CENA FOTOGRÁFICA ---------- */
-#scene .bgwrap{position:absolute;inset:-2.5%;will-change:transform}
+#scene .bgwrap{position:absolute;will-change:transform}
 #scene .bgwrap img{width:100%;height:100%;object-fit:cover;display:block;user-select:none;-webkit-user-drag:none}
 /* vinheta + gradiente cinematográfico sobre o palco */
 #stage:before{content:"";position:absolute;inset:0;z-index:30;pointer-events:none;border-radius:4px;
@@ -799,8 +798,13 @@ let cadSel=[];
 const COMBOS={
   "cartaAntiga+papel":{r:()=>{ say("A letra… <em>é a mesma</em>. Dez anos entre uma carta e um bilhete. MARINA. E de repente eu lembro: nós dois, andando por uma cidade vazia…");
       unlockLamp("cidade"); },done:false},
-  "fichagv+papel":{r:()=>{ say("\u201C7-41-25 / GVRC\u201D + ficha nº 7 da \u201CR. Central\u201D… <em>Guarda-Volumes da Rodoviária Central. Armário 7.</em> Os outros números devem abrir alguma coisa.");
-      addClue("gvrc"); },done:false},
+  "fichagv+papel":{r:()=>{
+      dialog([
+        {w:"gabriel",t:"\u201C7-41-25 / GVRC\u201D + ficha nº 7 da \u201CR. Central\u201D… <em>Guarda-Volumes da Rodoviária Central. Armário 7.</em> Os outros números devem abrir alguma coisa."},
+        {w:"gabriel",t:"Mas entre o bar e a rodoviária existe uma noite inteira que eu não lembro. O cheiro de <em>fritura</em> na jaqueta, o curativo <em>profissional</em>… O quarteirão da Farma 24h viu alguma coisa."},
+      ],()=>{ addClue("gvrc");
+        if(!S.f.ruaOpen){ S.f.ruaOpen=true; toast("🗺️ Novo local: <b>O quarteirão</b>"); updateHud(); }
+      }); },done:false},
   "papel+recibo":{r:()=>say("O táxi me trouxe de algum lugar… e o bilhete aponta para a rodoviária. As duas pistas olham na mesma direção."),done:false},
   "curativo+sangue":{r:()=>say("O curativo é profissional, o sangue é pouco e está no <em>meu</em> punho. Hipótese: limpei o meu próprio rosto. O sangue é meu."),done:false},
   "barro+fichagv":{r:()=>say("Barro vermelho + rodoviária. Os canteiros da Rodoviária Central são famosos por sujar sapato de gente apressada."),done:false},
@@ -848,6 +852,9 @@ function updateHud(){
   $("#nInv").textContent=Object.keys(S.inv).length;
   $("#nCad").textContent=Object.keys(S.clues).length;
   $("#nMem").textContent=lampCount()+"/12";
+  // guia de progressão: chaveiro precisa de exame a fundo, depois dedução no caderno
+  $("#bInv").classList.toggle("pulse", hasItem("chaveiro")&&!hasClue("fichagv")&&!S.f.ruaOpen);
+  $("#bCad").classList.toggle("pulse", hasClue("fichagv")&&hasClue("papel")&&!S.f.ruaOpen);
   dbSave();
 }
 $("#bInv").onclick=()=>{sfx.click();openInv()};
@@ -976,7 +983,7 @@ const SCENE_ART={
   rodo:{src:"img/rodo.jpg"},
   plat:{src:"img/plat.jpg"}
 };
-const PARA={x:0,y:0,tx:0,ty:0,started:false};
+const PARA={x:0,y:0,tx:0,ty:0,started:false,ar:16/9};
 function initStage(){
   if(PARA.started)return; PARA.started=true;
   const st=$("#stage");
@@ -986,7 +993,22 @@ function initStage(){
     PARA.ty=((e.clientY-r.top)/r.height)*2-1;
   });
   st.addEventListener("mouseleave",()=>{PARA.tx=0;PARA.ty=0;});
+  window.addEventListener("resize",layoutStage);
   requestAnimationFrame(stageLoop);
+}
+/* posiciona imagem e hotspots no retângulo "cover" do palco —
+   a imagem sempre cobre o quadro inteiro, sem borda aparente */
+function layoutStage(){
+  const st=$("#stage"); if(!st)return;
+  const r=st.getBoundingClientRect();
+  let w,h;
+  if(r.width/r.height>PARA.ar){ w=r.width; h=w/PARA.ar; }
+  else { h=r.height; w=h*PARA.ar; }
+  const x=(r.width-w)/2, y=(r.height-h)/2;
+  [$("#scene .bgwrap"),$("#hotspots")].forEach(el=>{ if(!el)return;
+    el.style.left=x+"px"; el.style.top=y+"px";
+    el.style.width=w+"px"; el.style.height=h+"px"; el.style.inset="auto";
+  });
 }
 let _pt=0;
 function stageLoop(ts){
@@ -996,11 +1018,15 @@ function stageLoop(ts){
   PARA.y+=(PARA.ty-PARA.y)*Math.min(1,dt*4.5);
   const wrap=$("#scene .bgwrap"); if(!wrap)return;
   const r=$("#stage").getBoundingClientRect();
-  // translação real (parallax) + respiração lenta de zoom
-  const dx=-PARA.x*r.width*0.011, dy=-PARA.y*r.height*0.011+Math.sin(t*0.4)*1.5;
-  const zz=1.012+Math.sin(t*0.21)*0.005;
-  wrap.style.transform=`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${zz.toFixed(4)})`;
-  $("#hotspots").style.transform=`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px)`;
+  const zz=1.05+Math.sin(t*0.21)*0.004;
+  // o mouse "olha ao redor": pana até o limite do que a imagem tem além do quadro,
+  // então nunca aparece borda — e nada da imagem fica inalcançável
+  const ox=Math.max(0,(wrap.offsetWidth*zz-r.width)/2);
+  const oy=Math.max(0,(wrap.offsetHeight*zz-r.height)/2);
+  const dx=-PARA.x*ox, dy=-PARA.y*Math.max(0,oy-2)+Math.sin(t*0.4)*1.5;
+  const tf=`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${zz.toFixed(4)})`;
+  wrap.style.transform=tf;
+  $("#hotspots").style.transform=tf; // hotspots colados na imagem
 }
 function buildScene(id){
   initStage();
@@ -1008,8 +1034,13 @@ function buildScene(id){
   $("#scene").innerHTML=`<div class="bgwrap"><img src="${art.src}" alt="" draggable="false"${art.filter?` style="filter:${art.filter}"`:""}></div>`;
   const im=$("#scene img");
   im.style.opacity=0;
-  const show=()=>{im.style.transition="opacity .5s ease";im.style.opacity=1;};
+  const show=()=>{
+    if(im.naturalWidth) PARA.ar=im.naturalWidth/im.naturalHeight;
+    layoutStage();
+    im.style.transition="opacity .5s ease"; im.style.opacity=1;
+  };
   im.complete?show():im.onload=show;
+  layoutStage();
   renderHotspots();
 }
 function goScene(id){
@@ -1404,7 +1435,9 @@ SCENES.bar={
         {w:"tonho",t:"Ih, é. Esse chaveiro laranja apareceu no balcão de madrugada. A moça da jaqueta jeans esqueceu? Ou era seu?"},
         {w:"gabriel",t:"Ficha número <em>7</em>… \u201CR. CENTRAL\u201D… Tonho, eu acho que eu peguei o chaveiro <em>dela</em> por engano durante a noite. E larguei aqui."},
         {w:"tonho",t:"Vocês dois trocando chaveiro sem perceber. Dez anos se passam e ninguém aprende nada."},
-      ],()=>refresh());
+      ],()=>{ refresh(); updateHud();
+        say("Ficha número <em>7</em>. O bilhete da Marina também tem um 7… Vou examinar esse chaveiro <em>a fundo</em> no inventário — e depois abrir o caderno.");
+      });
     }});
     H.push({x:48,y:7,w:11,h:40,l:"Sair do bar",fn:openMap});
     return H;
