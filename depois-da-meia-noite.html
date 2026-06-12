@@ -252,7 +252,8 @@ input:focus{outline:none;border-color:var(--warm)}
     <button class="hbtn" id="bCad">📓 Caderno <span class="badge" id="nCad">0</span></button>
     <button class="hbtn" id="bMem">🕛 Memórias <span class="badge" id="nMem">0/12</span></button>
     <button class="hbtn" id="bScore">🏆 Hall da Fama</button>
-    <button class="hbtn" id="bMap" style="display:none">🗺️ Sair / Ir para…</button>
+    <button class="hbtn" id="bMap" style="display:none">🗺️ Ir para…</button>
+    <button class="hbtn" id="bExit" title="Voltar à tela inicial">⏻ Sair</button>
   </header>
   <div id="stagewrap">
     <div id="stage">
@@ -289,6 +290,10 @@ input:focus{outline:none;border-color:var(--warm)}
     <p>Gabriel Loreto acordou às 9h47 de um sábado com um corte na sobrancelha, um bilhete que não escreveu
     e dez horas faltando na memória. Reconstrua a noite. Antes do ônibus das sete.</p>
     <button class="btn" id="startBtn" style="font-size:16px;padding:14px 34px">▸ Acordar</button>
+    <div id="pauseBtns" style="display:none;justify-content:center;gap:12px;flex-wrap:wrap">
+      <button class="btn" id="btnReturn" style="font-size:16px;padding:14px 30px">▸ Retornar</button>
+      <button class="btn" id="btnRestart" style="font-size:15px;padding:14px 24px;opacity:.85">↺ Reiniciar</button>
+    </div>
     <div class="kbd">aponte · clique · examine a fundo · desconfie de tudo</div>
   </div>
 </div>
@@ -352,6 +357,12 @@ async function dbLoad(){
     S.scene = data.scene;
     return data.scene;
   }catch(e){ console.warn('dbLoad falhou', e); return false; }
+}
+
+async function dbReset(){
+  if(!DB || !SESSION_ID) return;
+  try{ await DB.collection('saves').doc(SESSION_ID).delete(); }
+  catch(e){ console.warn('dbReset falhou', e); }
 }
 
 function endingRank(tipo){ return tipo==="A"?3:tipo==="B"?2:1; }
@@ -1006,8 +1017,9 @@ function layoutStage(){
   else { h=r.height; w=h*PARA.ar; }
   const x=(r.width-w)/2, y=(r.height-h)/2;
   [$("#scene .bgwrap"),$("#hotspots")].forEach(el=>{ if(!el)return;
+    el.style.inset="auto"; // limpar antes: "inset" é shorthand e apagaria left/top
     el.style.left=x+"px"; el.style.top=y+"px";
-    el.style.width=w+"px"; el.style.height=h+"px"; el.style.inset="auto";
+    el.style.width=w+"px"; el.style.height=h+"px";
   });
 }
 let _pt=0;
@@ -1021,9 +1033,15 @@ function stageLoop(ts){
   const zz=1.05+Math.sin(t*0.21)*0.004;
   // o mouse "olha ao redor": pana até o limite do que a imagem tem além do quadro,
   // então nunca aparece borda — e nada da imagem fica inalcançável
-  const ox=Math.max(0,(wrap.offsetWidth*zz-r.width)/2);
-  const oy=Math.max(0,(wrap.offsetHeight*zz-r.height)/2);
-  const dx=-PARA.x*ox, dy=-PARA.y*Math.max(0,oy-2)+Math.sin(t*0.4)*1.5;
+  const w=wrap.offsetWidth, h=wrap.offsetHeight, L=wrap.offsetLeft, T=wrap.offsetTop;
+  const ox=Math.max(0,(w*zz-r.width)/2);
+  const oy=Math.max(0,(h*zz-r.height)/2);
+  let dx=-PARA.x*ox, dy=-PARA.y*Math.max(0,oy-2)+Math.sin(t*0.4)*1.5;
+  // trava de cobertura: independente do layout, as bordas da imagem
+  // (já escalada) nunca podem entrar no quadro
+  const padX=w*(zz-1)/2, padY=h*(zz-1)/2;
+  dx=Math.max(r.width-(L+w)-padX, Math.min(-L+padX, dx));
+  dy=Math.max(r.height-(T+h)-padY, Math.min(-T+padY, dy));
   const tf=`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(${zz.toFixed(4)})`;
   wrap.style.transform=tf;
   $("#hotspots").style.transform=tf; // hotspots colados na imagem
@@ -2197,10 +2215,15 @@ async function ending(tipo){
 $("#titlebg").innerHTML=`
   <img src="img/gabriel.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 22%;filter:brightness(.5) saturate(.85)">
   <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 38%,transparent 30%,rgba(5,7,12,.88) 78%),linear-gradient(180deg,rgba(5,7,12,.55),transparent 30%,transparent 60%,rgba(5,7,12,.92))"></div>`;
+function hideTitle(){
+  const t=$("#title");
+  t.style.transition="opacity .8s"; t.style.opacity=0;
+  setTimeout(()=>{ t.style.display="none"; },800);
+}
 $("#startBtn").onclick=()=>{
   ac(); sfx.ok();
-  $("#title").style.transition="opacity .8s"; $("#title").style.opacity=0;
-  setTimeout(async ()=>{ $("#title").remove();
+  hideTitle();
+  setTimeout(async ()=>{
     await dbInit();
     const savedScene = await dbLoad();
     if(savedScene){
@@ -2212,6 +2235,27 @@ $("#startBtn").onclick=()=>{
       });
     }
   },800);
+};
+
+/* ---------- PAUSA: SAIR / RETORNAR / REINICIAR ---------- */
+let restartArmed=false;
+$("#bExit").onclick=()=>{
+  sfx.click();
+  restartArmed=false;
+  $("#btnRestart").textContent="↺ Reiniciar"; $("#btnRestart").disabled=false;
+  $("#startBtn").style.display="none";
+  $("#pauseBtns").style.display="flex";
+  const t=$("#title");
+  t.style.transition="opacity .4s"; t.style.opacity=0; t.style.display="flex";
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ t.style.opacity=1; }));
+};
+$("#btnReturn").onclick=()=>{ sfx.click(); hideTitle(); };
+$("#btnRestart").onclick=async()=>{
+  const b=$("#btnRestart");
+  if(!restartArmed){ restartArmed=true; sfx.bad(); b.textContent="⚠ Zerar todo o progresso? Clique de novo"; return; }
+  b.textContent="Reiniciando…"; b.disabled=true;
+  await dbReset();       // apaga o save da nuvem
+  location.reload();     // zera todo o estado em memória e volta ao título
 };
 /* atalho ESC fecha modal */
 document.addEventListener("keydown",e=>{ if(e.key==="Escape" && $("#modalveil").classList.contains("on")) closeModal(); });
