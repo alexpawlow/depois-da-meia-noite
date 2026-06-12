@@ -147,6 +147,9 @@ body{background:#06080d;color:var(--ink);font-family:var(--sans);overflow:hidden
 .cluerow{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-bottom:1px solid #1d2536;cursor:pointer;border-radius:8px;transition:.12s}
 .cluerow:hover{background:rgba(90,208,197,.05)}
 .cluerow.sel{background:rgba(90,208,197,.12);outline:1px solid var(--teal)}
+.cluerow.used{cursor:default;opacity:.4;filter:grayscale(.6)}
+.cluerow.used:hover{background:none}
+.cluerow.used .dot{color:var(--dim)}
 .cluerow .dot{color:var(--teal);font-size:15px;margin-top:1px}
 .cluerow b{display:block;font-size:13.5px;color:var(--ink)}
 .cluerow span{font-size:12.5px;color:var(--dim);line-height:1.4}
@@ -284,6 +287,7 @@ input:focus{outline:none;border-color:var(--warm)}
 </div></div>
 <div id="toasts"></div>
 <audio id="bgm" src="audio/theme.mp3" loop preload="auto"></audio>
+<audio id="bgmFinal" src="audio/tema-final.mp3" preload="none"></audio>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
@@ -443,7 +447,7 @@ const S={
     edmilson:false, pastelLamp:false, cidaPediu:false, achouProtocolo:false, farmaciaOk:false,
     taxiOk:false, rodoOpen:false, leuPlaca:false, tentou4125:false, armario:false,
     cartaMarina:false, radioOk:false, demoTocada:false, musica:false, aptNoite:false,
-    plataformaOpen:false, fim:null
+    plataformaOpen:false, fim:null, usedClues:{}
   }
 };
 
@@ -858,7 +862,7 @@ function openCaderno(){
     const key=cadSel.slice().sort().join("+");
     const c=COMBOS[key];
     closeModal();
-    if(c){ c.r(); }
+    if(c){ cadSel.forEach(id=>S.f.usedClues[id]=true); c.r(); }
     else {
       const meh=["Hmm. Junto, separo, e… nada. Próxima.","Essas duas não conversam. Igual eu e o Léo agora.",
         "Se isso fizer sentido, eu como o chaveiro.","Interessante. Inútil, mas interessante."];
@@ -870,8 +874,12 @@ function renderClues(){
   const l=$("#cluelist"); if(!l)return; l.innerHTML="";
   Object.keys(S.clues).forEach(id=>{
     const c=CLUES[id];
-    const r=document.createElement("div"); r.className="cluerow"+(cadSel.includes(id)?" sel":"");
+    const used=S.f.usedClues[id];
+    const r=document.createElement("div"); r.className="cluerow"+(cadSel.includes(id)?" sel":"")+(used?" used":"");
     r.innerHTML=`<span class="dot">◈</span><div><b>${c.n}</b><span>${c.d}</span></div>`;
+    if(used){
+      l.appendChild(r); return;
+    }
     r.onclick=()=>{ sfx.click();
       if(cadSel.includes(id)) cadSel=cadSel.filter(x=>x!==id);
       else { cadSel.push(id); if(cadSel.length>2) cadSel.shift(); }
@@ -971,34 +979,6 @@ function showContinueModal(savedScene){
 }
 
 /* ---------- MAPA ---------- */
-function openMap(){
-  const locs=[
-    {id:"apt",n:S.f.aptNoite?"Apartamento (noite)":"Meu apartamento",t:S.f.aptNoite?"SÁB · 23H30":"SÁB · 09H47",on:true,ic:"🏠"},
-    {id:"bar",n:"Bar Subsolo",t:"SÁB · 12H10",on:S.f.barOpen,ic:"🍺"},
-    {id:"rua",n:"O quarteirão — food truck, farmácia, táxi",t:"SÁB · 17H30",on:S.f.ruaOpen,ic:"🌆"},
-    {id:"rodo",n:"Rodoviária Central",t:"SÁB · 21H40",on:S.f.rodoOpen,ic:"🚌"},
-    {id:"plat",n:"Plataforma 12 — DOMINGO, 7h",t:"DOM · 06H52",on:S.f.plataformaOpen,ic:"🌅"}
-  ];
-  let html=`<p class="dimtxt mb">Para onde Gabriel vai agora?</p>
-   <button class="btn ghost mb" id="viewMapBtn">🗺️ Ver mapa</button>`;
-  locs.forEach(L=>{
-    if(L.on){
-      html+=`<button class="opt" data-go="${L.id}"><b>${L.ic} ${L.n}</b> <span class="dimtxt" style="float:right">${L.t}</span></button>`;
-    } else {
-      html+=`<div class="opt locked"><b>🔒 ${L.n}</b> <span class="dimtxt" style="float:right">${L.t}</span></div>`;
-    }
-  });
-  if(S.f.cartaMarina && !S.f.plataformaOpen){
-    html+=`<p class="dimtxt mt">O ônibus dela é <b>amanhã às 7h</b>. Quando eu estiver pronto… ou quando o tempo acabar.</p>`;
-  }
-  modal("Ir para…",html,"mapa da cidade");
-  $("#viewMapBtn").onclick=()=>{sfx.click(); openMapImage();};
-  $$("#mbody [data-go]").forEach(b=>b.onclick=()=>{
-    const id=b.dataset.go; closeModal();
-    if(id==="plat"){ confirmPlataforma(); return; }
-    travel(id);
-  });
-}
 const MAP_SPOTS=[
   {id:"apt", x:19,   y:12, w:16.5, h:26,   on:()=>true},
   {id:"bar", x:42.5, y:10, w:17.5, h:26.5, on:()=>S.f.barOpen},
@@ -1007,8 +987,8 @@ const MAP_SPOTS=[
   {id:"rodo",x:63.5, y:51, w:17.5, h:26.5, on:()=>S.f.rodoOpen},
   {id:"plat",x:37.5, y:72, w:23,   h:24,   on:()=>S.f.plataformaOpen}
 ];
-function openMapImage(){
-  const html=`
+function openMap(){
+  let html=`
    <div style="position:relative;max-width:680px;margin:0 auto">
      <img src="img/mapa.jpg" alt="Mapa dos lugares" style="display:block;width:100%;border-radius:6px">
      ${MAP_SPOTS.map(L=>{
@@ -1016,10 +996,11 @@ function openMapImage(){
        return `<div class="maphot${unlocked?"":" locked"}" data-go="${L.id}"
          style="left:${L.x}%;top:${L.y}%;width:${L.w}%;height:${L.h}%"></div>`;
      }).join("")}
-   </div>
-   <div class="row mt"><button class="btn ghost" id="backMapList">← Voltar</button></div>`;
-  modal("Mapa dos lugares",html,"clique num local liberado para ir até ele");
-  $("#backMapList").onclick=()=>{sfx.click(); openMap();};
+   </div>`;
+  if(S.f.cartaMarina && !S.f.plataformaOpen){
+    html+=`<p class="dimtxt mt">O ônibus dela é <b>amanhã às 7h</b>. Quando eu estiver pronto… ou quando o tempo acabar.</p>`;
+  }
+  modal("Ir para…",html,"clique num local liberado para ir até ele");
   $$("#mbody .maphot").forEach(d=>{
     if(d.classList.contains("locked")) return;
     d.onclick=()=>{
@@ -1473,7 +1454,7 @@ function renderFrags(){
 function playMarinaAudio(){
   modal("Áudio restaurado — 06h02, número desconhecido",`
    <div class="paper" style="background:#1a1410;color:#ffd9a0;font-family:var(--sans)">
-     <p style="font-family:var(--mono);font-size:12px;color:#caa14b">▶ 00:23 ────────●── 00:31</p>
+     <audio controls preload="none" style="width:100%" src="audio/marina.mp3"></audio>
      <p class="mt"><i>(voz de mulher, baixa, meio rindo)</i></p>
      <p>\u201CNão devia ter deixado você dormir ali, mas você tava… (risada) …impossível. Igual há dez anos.
      Guarda bem o papel, tá? Sete… quarenta e um… <i>(anúncio: \u2018—taforma doze, embarque imediato\u2019)</i>
@@ -1941,7 +1922,7 @@ function hotArmario(){
     S.f._fichaUsada=true;
     dialog([
       {w:"gabriel",t:"A ficha laranja entra, gira… <em>clac</em>. A portinhola externa abre."},
-      {w:"gabriel",t:"Mas dentro há um <em>segundo cadeado</em>, de segredo, com um disco giratório. O papel diz \u201C7-41-25\u201D."},
+      {w:"gabriel",t:"Mas dentro há um <em>segundo cadeado</em>, de segredo, com um disco giratório. O papel tem o resto do código — mas a ressaca apagou os números da minha cabeça."},
     ],()=>puzzleArmario());
     return;
   }
@@ -1950,14 +1931,14 @@ function hotArmario(){
 function puzzleArmario(){
   if(!S.f.tentou4125){
     modal("Armário 7 — o segredo",`
-     <p class="dimtxt mb">O bilhete: <b>7-41-25</b>. O 7 é o armário. Sobram <b>41-25</b>… quatro dígitos?</p>
+     <p class="dimtxt mb">O bilhete tinha um código depois do “7” do armário. Será que é um número de quatro dígitos?</p>
      <div class="row" style="justify-content:center"><input type="number" id="seg4" placeholder="0000" style="font-size:24px;width:140px"></div>
      <div class="row mt" style="justify-content:center"><button class="btn warm" id="seg4btn">Tentar</button></div>`);
     $("#seg4btn").onclick=()=>{
       sfx.bad(); S.f.tentou4125=true; closeModal();
       dialog([
-        {w:"gabriel",t:"\u201C4-1-2-5\u201D… nada. Outra ordem… nada. O cadeado me encara com suas janelinhas de desprezo."},
-        {w:"gabriel",t:"Calma. Pensa. \u201C41-25\u201D, escrito <em>com hífen</em>… Talvez não seja um código de 4 dígitos. Talvez seja do jeito que <em>este lugar</em> escreve segredos."},
+        {w:"gabriel",t:"Esse número de quatro dígitos… nada. O cadeado me encara com suas janelinhas de desprezo."},
+        {w:"gabriel",t:"Calma. Pensa. O resto do bilhete, escrito <em>com hífen</em>… Talvez não seja um código de 4 dígitos. Talvez seja do jeito que <em>este lugar</em> escreve segredos."},
         {w:"narrador",t:"Há uma placa amarelada na parede do guarda-volumes. Gente apressada nunca lê placas."},
       ],()=>say("Talvez valha <em>ler a placa de instruções</em> na parede."));
     };
@@ -1973,8 +1954,7 @@ function puzzleArmario(){
      <div class="dial"><label>② ESQUERDA ⟲</label><div class="val" id="dEsq">00</div>
        <div class="ctr"><button class="btn ghost" id="dEsqDn">−</button><button class="btn ghost" id="dEsqUp">+</button></div></div>
    </div>
-   <div class="row mt" style="justify-content:center"><button class="btn warm" id="alav">⤓ Puxar a alavanca</button></div>
-   <p class="dimtxt mt" style="text-align:center">O bilhete sussurra: 7-<b>41</b>-<b>25</b>.</p>`);
+   <div class="row mt" style="justify-content:center"><button class="btn warm" id="alav">⤓ Puxar a alavanca</button></div>`);
   const upd=()=>{ $("#dDir").textContent=String(dir).padStart(2,"0"); $("#dEsq").textContent=String(esq).padStart(2,"0"); };
   $("#dDirUp").onclick=()=>{dir=(dir+1)%60;tone(500+dir*4,0.04,"square",0.04);upd()};
   $("#dDirDn").onclick=()=>{dir=(dir+59)%60;tone(500+dir*4,0.04,"square",0.04);upd()};
@@ -2276,7 +2256,11 @@ function goFinal(){
   }
 }
 async function ending(tipo){
-  if(tipo==="A") playSeq(REFRAO,0.4);
+  if(tipo==="A"){
+    playSeq(REFRAO,0.4);
+    pauseMusic();
+    const fa=$("#bgmFinal"); fa.volume=0.35; fa.currentTime=0; fa.play().catch(()=>{});
+  }
   if(tipo!=="C"){
     const name=await promptPlayerName();
     if(name) await dbScore(name, tipo);
