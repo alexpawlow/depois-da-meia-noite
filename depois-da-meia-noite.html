@@ -1814,10 +1814,10 @@ function talkCida(){
     if(v==="B-0247"||v==="B0247"||v==="0247"){
       S.f.farmaciaOk=true; sfx.ok();
       modal("Cupom localizado — 2ª via",`
-       <div class="ticket" style="max-width:330px;margin:0 auto">FARMA 24H · 2ª VIA<span class="hr"></span>
-        PROTOCOLO: B-0247<br>DATA: SÁB · <b>02h47</b><span class="hr"></span>
-        1x antisséptico ............ 12,90<br>1x curativo borboleta (kit) . 18,50<br>1x analgésico (cartela) ..... 9,80<span class="hr"></span>
-        PAGO EM DINHEIRO (moedas)<br><span style="font-size:11px">obs. do caixa: \u201Ca moça virou os bolsos do rapaz, contou as moedas e disse: tá vendo? você ainda me deve um show\u201D</span></div>
+       <div style="max-width:230px;margin:0 auto">
+         <img src="img/png/cupom-farmacia.jpg" alt="Cupom Farma 24h" style="width:100%;display:block;border-radius:4px">
+         <p class="dimtxt mt" style="font-size:11px">obs. do caixa: \u201Ca moça virou os bolsos do rapaz, contou as moedas e disse: tá vendo? você ainda me deve um show\u201D</p>
+       </div>
        <div class="row mt" style="justify-content:center"><button class="btn" id="cupFarmOk">02h47. Mais um marco.</button></div>`);
       $("#cupFarmOk").onclick=()=>{ closeModal(); addItem("cupomfarm");
         dialog([
