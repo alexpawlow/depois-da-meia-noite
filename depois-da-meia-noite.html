@@ -166,6 +166,24 @@ body{background:#06080d;color:var(--ink);font-family:var(--sans);overflow:hidden
 #act h1{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(30px,5vw,52px);margin:14px 0 10px;color:var(--ink)}
 #act p{color:var(--dim);font-size:16px;max-width:560px;line-height:1.6}
 #act .go{margin-top:30px}
+/* ---------- FINAL A — álbum de memórias ---------- */
+#finalA{position:fixed;inset:0;z-index:210;background:#05070c;display:none;flex-direction:column;align-items:center;text-align:center;padding:30px;overflow:hidden}
+#finalA.on{display:flex;animation:fadein 1.2s ease}
+#finalA .bg{position:absolute;inset:0;background:url("img/png/background.png") center/cover;opacity:.32;filter:saturate(.75) brightness(.55)}
+#finalA .bg:after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,transparent 35%,#05070c 92%)}
+#finalA .head{position:relative;z-index:5;margin-top:18px;pointer-events:none}
+#finalA .head .k{font-family:var(--mono);letter-spacing:6px;color:var(--neon);font-size:13px}
+#finalA .head h1{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(30px,5vw,52px);margin:14px 0 0;color:var(--ink)}
+#finalAlbum{position:absolute;inset:0;z-index:2}
+#finalAlbum .photo{position:absolute;left:var(--x);top:var(--y);width:clamp(150px,20vw,230px);
+  background:#f5f1e8;padding:12px 12px 32px;border-radius:3px;box-shadow:0 22px 50px rgba(0,0,0,.55);
+  opacity:0;transform:translate(-50%,-50%) rotate(calc(var(--r) + 25deg)) scale(.45) translateY(-70px);
+  transition:opacity .9s ease,transform 1.1s cubic-bezier(.34,1.56,.64,1)}
+#finalAlbum .photo.land{opacity:1;transform:translate(-50%,-50%) rotate(var(--r)) scale(1) translateY(0)}
+#finalAlbum .photo img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:1px}
+#finalAlbum .photo .cap{margin-top:10px;font-family:var(--serif);font-style:italic;color:#3a342c;font-size:13px}
+#finalA #finalAGo{position:absolute;left:50%;bottom:34px;transform:translateX(-50%);z-index:6;opacity:0;transition:opacity 1s ease;pointer-events:none}
+#finalA #finalAGo.show{opacity:1;pointer-events:auto}
 /* ---------- TITLE ---------- */
 #title{position:fixed;inset:0;z-index:300;background:#05070c;display:flex;align-items:center;justify-content:center}
 #title .inner{text-align:center;max-width:720px;padding:24px;position:relative;z-index:2}
@@ -291,6 +309,12 @@ input:focus{outline:none;border-color:var(--warm)}
 <div id="flash"></div>
 <div id="flashcard"><div class="k">LAMPEJO RECUPERADO</div><h3 id="fctitle"></h3><p id="fcdesc"></p></div>
 <div id="act"><div class="k" id="actk"></div><h1 id="acth"></h1><p id="actp"></p><button class="btn go" id="actgo">Continuar</button></div>
+<div id="finalA">
+  <div class="bg"></div>
+  <div class="head"><div class="k">FINAL A</div><h1>“Depois da Meia-Noite”</h1></div>
+  <div id="finalAlbum"></div>
+  <button class="btn" id="finalAGo">↺ Jogar de novo</button>
+</div>
 <div id="title">
   <div id="titlebg"></div>
   <div class="inner">
@@ -1016,12 +1040,12 @@ const SCENES={};
    (point-and-click clássico com parallax sutil)
    ============================================================ */
 const SCENE_ART={
-  apt :{src:"img/apt.jpg"},
-  aptN:{src:"img/aptN.jpg"},
+  apt :{src:"img/apt.png"},
+  aptN:{src:"img/aptN.png"},
   bar :{src:"img/bar.jpg"},
   rua :{src:"img/rua.jpg"},
-  rodo:{src:"img/rodo.jpg"},
-  plat:{src:"img/plat.jpg"}
+  rodo:{src:"img/rodo.png"},
+  plat:{src:"img/plat.png"}
 };
 const PARA={x:0,y:0,tx:0,ty:0,started:false,ar:16/9};
 function initStage(){
@@ -2245,19 +2269,64 @@ function goFinal(){
     ],()=>ending("B"));
   }
 }
+/* ---------- ÁLBUM DE MEMORIAS (Final A) ---------- */
+function finalAlbumList(){
+  const layout=[
+    {x:16,y:60,r:-9},{x:40,y:46,r:6},{x:62,y:62,r:-5},
+    {x:82,y:46,r:10},{x:28,y:80,r:7},{x:70,y:80,r:-11},{x:50,y:68,r:3}
+  ];
+  return [
+    {id:"show",f:"memory1"},{id:"balcao",f:"memory2"},{id:"queda",f:"memory3"},
+    {id:"farmacia",f:"memory4"},{id:"presente",f:"memory5"},{id:"banco",f:"memory6"},{id:"taxi",f:"memory7"}
+  ].map((m,i)=>({src:`img/png/${m.f}.png`,cap:lampById(m.id).h,...layout[i]}));
+}
+function showFinalA(fa){
+  const album=$("#finalAlbum"); album.innerHTML="";
+  const photos=finalAlbumList().map(it=>{
+    const d=document.createElement("div"); d.className="photo";
+    d.style.setProperty("--x",it.x+"%");
+    d.style.setProperty("--y",it.y+"%");
+    d.style.setProperty("--r",it.r+"deg");
+    d.innerHTML=`<img src="${encodeURI(it.src)}" alt=""><div class="cap">${it.cap}</div>`;
+    album.appendChild(d);
+    return d;
+  });
+  $("#finalA").classList.add("on");
+  $("#finalAGo").classList.remove("show");
+  $("#finalAGo").onclick=()=>location.reload();
+  const run=()=>{
+    const dur=(fa.duration&&isFinite(fa.duration)&&fa.duration>0)?fa.duration:photos.length*6;
+    const per=Math.max(2.4,dur/photos.length);
+    let i=0;
+    const step=()=>{
+      if(i<photos.length){ photos[i].classList.add("land"); i++; setTimeout(step,per*1000); }
+      else {
+        const finish=()=>$("#finalAGo").classList.add("show");
+        if(fa.ended||fa.paused) finish();
+        else fa.addEventListener("ended",finish,{once:true});
+        setTimeout(finish,1500);
+      }
+    };
+    step();
+  };
+  if(fa.readyState>=1) run();
+  else { fa.addEventListener("loadedmetadata",run,{once:true}); setTimeout(run,1500); }
+}
 async function ending(tipo){
   if(tipo==="A"){
-    playSeq(REFRAO,0.4);
     pauseMusic();
+    S.f.fim=tipo;
     const fa=$("#bgmFinal"); fa.volume=0.35; fa.currentTime=0; fa.play().catch(()=>{});
+    const name=await promptPlayerName();
+    if(name) await dbScore(name, tipo);
+    showFinalA(fa);
+    return;
   }
   if(tipo!=="C"){
     const name=await promptPlayerName();
     if(name) await dbScore(name, tipo);
   }
   const data={
-    A:{k:"FINAL A",h:"\u201CDepois da Meia-Noite\u201D",
-       p:"A música terminada, tocada na plataforma 12 — a música que <b>você</b> montou. Ela perdeu o ônibus de propósito. Os créditos sobem com a gravação completa: Sol · Lá · Si · Lá · Sol · Mi.<br><br><i>Algumas noites a gente recupera inteiras.</i>"},
     B:{k:"FINAL B",h:"\u201CPlataforma 12\u201D",
        p:"Ele chegou — mas sem entender tudo. Contatos trocados, ônibus partido, refrão pendente.<br><br><i>\u201CAlgumas noites a gente recupera. Outras, reconstrói.\u201D</i><br><br>Há mais noite para encontrar: lampejos opcionais, cartas não lidas, uma música inacabada. Vale jogar de novo."},
     C:{k:"FINAL C",h:"\u201CO suporte vazio\u201D",
