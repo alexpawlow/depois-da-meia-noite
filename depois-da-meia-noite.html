@@ -1819,12 +1819,14 @@ function talkCida(){
          <p class="dimtxt mt" style="font-size:11px">obs. do caixa: \u201Ca moça virou os bolsos do rapaz, contou as moedas e disse: tá vendo? você ainda me deve um show\u201D</p>
        </div>
        <div class="row mt" style="justify-content:center"><button class="btn" id="cupFarmOk">02h47. Mais um marco.</button></div>`);
-      $("#cupFarmOk").onclick=()=>{ closeModal(); addItem("cupomfarm");
+      const finishCupom=()=>{ if(S.inv.cupomfarm) return; closeModal(); addItem("cupomfarm");
         dialog([
           {w:"narrador",t:"O cheiro de antisséptico no balcão puxa o resto: as mãos firmes fechando o curativo borboleta, e a voz dela, baixa:"},
           {w:"marina",t:"\u201CDez anos e você ainda não aprendeu a <em>cair</em>.\u201D"},
         ],()=>unlockLamp("farmacia"));
       };
+      onModalClose=finishCupom;
+      $("#cupFarmOk").onclick=()=>{ onModalClose=null; finishCupom(); };
     } else { sfx.bad(); $("#protoHint").classList.add("on"); $("#protoHint").textContent="\u201CNão consta, meu filho. Confere o carimbo no curativo — letra, traço, número.\u201D"; }
   };
 }
