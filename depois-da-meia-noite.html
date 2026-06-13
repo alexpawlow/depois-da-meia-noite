@@ -2294,23 +2294,13 @@ function showFinalA(fa){
   $("#finalA").classList.add("on");
   $("#finalAGo").classList.remove("show");
   $("#finalAGo").onclick=()=>location.reload();
-  const run=()=>{
-    const dur=(fa.duration&&isFinite(fa.duration)&&fa.duration>0)?fa.duration:photos.length*6;
-    const per=Math.max(2.4,dur/photos.length);
-    let i=0;
-    const step=()=>{
-      if(i<photos.length){ photos[i].classList.add("land"); i++; setTimeout(step,per*1000); }
-      else {
-        const finish=()=>$("#finalAGo").classList.add("show");
-        if(fa.ended||fa.paused) finish();
-        else fa.addEventListener("ended",finish,{once:true});
-        setTimeout(finish,1500);
-      }
-    };
-    step();
+  const per=3.5; // segundos entre cada foto "jogada"
+  let i=0;
+  const step=()=>{
+    if(i<photos.length){ photos[i].classList.add("land"); i++; setTimeout(step,per*1000); }
+    else setTimeout(()=>$("#finalAGo").classList.add("show"),2500);
   };
-  if(fa.readyState>=1) run();
-  else { fa.addEventListener("loadedmetadata",run,{once:true}); setTimeout(run,1500); }
+  setTimeout(step,900);
 }
 async function ending(tipo){
   if(tipo==="A"){
