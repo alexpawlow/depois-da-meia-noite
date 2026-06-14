@@ -469,6 +469,24 @@ const S={
     plataformaOpen:false, fim:null
   }
 };
+function resetState(){
+  S.scene=null; S.night=false;
+  for(const k in S.inv) delete S.inv[k];
+  for(const k in S.clues) delete S.clues[k];
+  for(const k in S.lamps) delete S.lamps[k];
+  S.slots=Array(12).fill(null);
+  for(const k in S.f) delete S.f[k];
+  Object.assign(S.f,{
+    intro:false, phoneCharged:false, phoneUnlocked:false, sawFridge:false, audioFixed:false,
+    chargerMade:false, temCabo:false, temCarregador:false, cartaAntiga:false,
+    barOpen:false, contaPaga:false, fichas:3, fichaExtra:false, setlist:false, chaveiro:false,
+    perguntou:{}, storyVisto:false, leoLigado:false, ruaOpen:false,
+    edmilson:false, pastelLamp:false, cidaPediu:false, achouProtocolo:false, farmaciaOk:false,
+    taxiOk:false, rodoOpen:false, leuPlaca:false, tentou4125:false, armario:false,
+    cartaMarina:false, radioOk:false, demoTocada:false, musica:false, aptNoite:false,
+    plataformaOpen:false, fim:null
+  });
+}
 
 /* ---------- ÁUDIO (WebAudio, síntese leve) ---------- */
 let AC=null;
@@ -980,8 +998,10 @@ function showContinueModal(savedScene){
     updateHud();
     goScene(savedScene);
   };
-  $("#contNo").onclick=()=>{
+  $("#contNo").onclick=async()=>{
     onModalClose=null; closeModal();
+    await dbReset();
+    resetState();
     gameStartTime=Date.now();
     actCard("ATO 1","O Apartamento","Sábado, 9h47. Tudo neste quarto conta uma história. Inclusive o que <b>não</b> está nele.",()=>{
       updateHud(); goScene("apt");
