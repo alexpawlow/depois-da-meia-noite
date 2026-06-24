@@ -2020,6 +2020,10 @@ function showCartaMarina(fromInv){
      <p class="sig">— M.</p>
    </div>
    <div class="row mt"><button class="btn" id="cartaOk">${fromInv?"Fechar":"\u201CTermina a música.\u201D"}</button></div>`);
+  const unlockAptNoite=()=>{
+    S.f.aptNoite=true; S.f.plataformaOpen=true; refresh();
+    toast("🗺️ <b>Apartamento (noite)</b> e <b>Plataforma 12 (domingo, 7h)</b> no mapa");
+  };
   const finishCarta=()=>{
     closeModal();
     if(!S.f.cartaMarina){
@@ -2027,9 +2031,11 @@ function showCartaMarina(fromInv){
       dialog([
         {w:"gabriel",t:"\u201CTermina a música\u201D… A demo. A fita. Mas quem é que <em>toca fita cassete</em> em 2026?"},
         {w:"gabriel",t:"…O rádio-gravador do meu pai. Na caixa, em cima do armário. <em>Para casa.</em>"},
-      ],()=>{ S.f.aptNoite=true; S.f.plataformaOpen=true;
-        toast("🗺️ <b>Apartamento (noite)</b> e <b>Plataforma 12 (domingo, 7h)</b> no mapa");
+      ],()=>{ unlockAptNoite();
         say("O relógio invisível ficou visível: <em>domingo, 7h, plataforma 12</em>."); });
+    } else if(!S.f.aptNoite){
+      unlockAptNoite();
+      if(fromInv) openInv();
     } else if(fromInv){ openInv(); }
   };
   onModalClose=finishCarta;
