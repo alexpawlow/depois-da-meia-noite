@@ -2020,7 +2020,7 @@ function showCartaMarina(fromInv){
      <p class="sig">— M.</p>
    </div>
    <div class="row mt"><button class="btn" id="cartaOk">${fromInv?"Fechar":"\u201CTermina a música.\u201D"}</button></div>`);
-  $("#cartaOk").onclick=()=>{
+  const finishCarta=()=>{
     closeModal();
     if(!S.f.cartaMarina){
       S.f.cartaMarina=true; addClue("domingo");
@@ -2032,6 +2032,8 @@ function showCartaMarina(fromInv){
         say("O relógio invisível ficou visível: <em>domingo, 7h, plataforma 12</em>."); });
     } else if(fromInv){ openInv(); }
   };
+  onModalClose=finishCarta;
+  $("#cartaOk").onclick=()=>{ onModalClose=null; finishCarta(); };
 }
 function deepGuitarra(){
   modal("Giannini 1978 — examinar a fundo",`
